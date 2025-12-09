@@ -43,8 +43,17 @@
             box-sizing: border-box;
         }
         input:focus, select:focus { border-color: var(--primary-color); outline: none; }
-        input[readonly] { background-color: #e9ecef; cursor: not-allowed; }
         
+        /* Campo de carregamento do CEP */
+        .cep-loading { 
+            position: absolute; 
+            right: 10px; 
+            top: 38px; 
+            font-size: 0.8em; 
+            color: var(--primary-color); 
+            display: none; 
+        }
+
         /* Estilos de Erro */
         input.error { border-color: var(--error-color); background-color: #fff8f8; }
         .error-msg { color: var(--error-color); font-size: 0.85em; display: none; margin-top: 5px; }
@@ -92,4 +101,15 @@
         <h1>PROJETO ALÉM DO OLHAR</h1>
         <p class="intro">Reabilitação Visual na Saúde e na Educação - FAV/PCR</p>
 
-        <form id="myForm" novalid
+        <form id="myForm" novalidate>
+            
+            <h2>Identificação da Criança/Adolescente</h2>
+
+            <div class="form-group">
+                <label for="Nome Criança">Nome Completo *</label>
+                <input type="text" name="Nome Criança" required>
+            </div>
+
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 150px;">
+                    <label for
