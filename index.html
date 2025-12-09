@@ -221,8 +221,6 @@
                 </div>
             </div>
 
-            <h2 style="margin-top: 40px;">14. Endereço da criança ou adolescente</h2>
-            
             <div class="form-group">
                 <label for="CEP">CEP *</label>
                 <input type="text" id="campoCEP" name="CEP" required placeholder="00000-000" maxlength="9">
@@ -280,11 +278,6 @@
                         <input type="text" name="Quem Contato 2" required placeholder="Ex: Avó, Tio, Irmão...">
                     </div>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label for="Endereço">Endereço Completo (Referência/Observação)</label>
-                <input type="text" name="Endereço Obs" placeholder="Ponto de referência (Opcional)">
             </div>
           
             <h2>Identificação da Unidade Solicitante</h2>
@@ -500,7 +493,6 @@
         });
 
         // --- CONCATENAÇÃO DO ENDEREÇO ---
-        // Junta Rua, Numero, Bairro e Complemento numa string só
         const logradouro = document.getElementById('end_logradouro').value;
         const bairro = document.getElementById('end_bairro').value;
         const numero = document.getElementById('end_numero').value;
