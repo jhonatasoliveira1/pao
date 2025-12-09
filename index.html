@@ -29,6 +29,7 @@
         }
         h1 { text-align: center; color: var(--primary-color); margin-bottom: 10px; }
         h2 { border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 30px; color: var(--primary-color); }
+        h3 { color: #555; margin-top: 20px; font-size: 1.1em; border-left: 4px solid var(--primary-color); padding-left: 10px; }
         .intro { text-align: center; font-size: 0.9em; color: #666; margin-bottom: 30px; }
         
         .form-group { margin-bottom: 15px; position: relative; }
@@ -176,21 +177,33 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="Nome Responsável">Nome do Responsável *</label>
-                <input type="text" name="Nome Responsável" required>
+            <h3>Contatos e Responsáveis</h3>
+            
+            <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="Tel Responsável">Telefone Principal *</label>
+                        <input type="tel" id="Tel1" name="Tel Responsável" required placeholder="(xx) 9xxxx-xxxx" maxlength="15">
+                        <span class="error-msg">Preencha DDD + 9 dígitos.</span>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="Quem Contato 1">De quem é este número? *</label>
+                        <input type="text" name="Quem Contato 1" required placeholder="Ex: Mãe, Pai, Vizinha...">
+                    </div>
+                </div>
             </div>
 
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <div class="form-group" style="flex: 1; min-width: 200px;">
-                    <label for="Tel Responsável">Telefone Principal *</label>
-                    <input type="tel" id="Tel1" name="Tel Responsável" required placeholder="(xx) 9xxxx-xxxx" maxlength="15">
-                    <span class="error-msg">Preencha DDD + 9 dígitos corretamente.</span>
-                </div>
-                <div class="form-group" style="flex: 1; min-width: 200px;">
-                    <label for="Tel Segundo Contato">Telefone Secundário *</label>
-                    <input type="tel" id="Tel2" name="Tel Segundo Contato" required placeholder="(xx) 9xxxx-xxxx" maxlength="15">
-                    <span class="error-msg">Preencha DDD + 9 dígitos corretamente.</span>
+            <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="Tel Segundo Contato">Telefone Secundário *</label>
+                        <input type="tel" id="Tel2" name="Tel Segundo Contato" required placeholder="(xx) 9xxxx-xxxx" maxlength="15">
+                        <span class="error-msg">Preencha DDD + 9 dígitos.</span>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="Quem Contato 2">De quem é este número? *</label>
+                        <input type="text" name="Quem Contato 2" required placeholder="Ex: Avó, Tio, Irmão...">
+                    </div>
                 </div>
             </div>
 
@@ -290,11 +303,10 @@
         document.getElementById(id).addEventListener('input', (e) => e.target.value = mascaraTel(e.target.value));
     });
 
-    // --- VALIDAÇÃO LÓGICA (Verdadeira) ---
+    // --- VALIDAÇÃO LÓGICA ---
     function validarCPF(cpf) {
         cpf = cpf.replace(/[^\d]+/g, '');
         if (cpf == '') return false;
-        // Elimina CPFs invalidos conhecidos
         if (cpf.length != 11 || 
             cpf == "00000000000" || 
             cpf == "11111111111" || 
@@ -307,13 +319,11 @@
             cpf == "88888888888" || 
             cpf == "99999999999") 
                 return false;
-        // Valida 1o digito
         let add = 0;
         for (let i = 0; i < 9; i++) add += parseInt(cpf.charAt(i)) * (10 - i);
         let rev = 11 - (add % 11);
         if (rev == 10 || rev == 11) rev = 0;
         if (rev != parseInt(cpf.charAt(9))) return false;
-        // Valida 2o digito
         add = 0;
         for (let i = 0; i < 10; i++) add += parseInt(cpf.charAt(i)) * (11 - i);
         rev = 11 - (add % 11);
@@ -322,7 +332,6 @@
         return true;
     }
 
-    // Função de envio com verificação
     form.addEventListener('submit', e => {
         e.preventDefault();
         
@@ -340,7 +349,7 @@
             cpfMsg.style.display = 'none';
         }
 
-        // Validar CNS (Apenas comprimento 15 dígitos)
+        // Validar CNS
         const cnsInput = document.getElementById('CNS');
         const cnsClean = cnsInput.value.replace(/\D/g, "");
         const cnsMsg = cnsInput.nextElementSibling;
@@ -353,13 +362,12 @@
             cnsMsg.style.display = 'none';
         }
 
-        // Validar Telefones (Apenas comprimento 11 dígitos: DDD + 9)
+        // Validar Telefones Pessoais (Exige 11 digitos: DDD + 9)
         ['Tel1', 'Tel2'].forEach(id => {
             const telInput = document.getElementById(id);
             const telClean = telInput.value.replace(/\D/g, "");
             const telMsg = telInput.nextElementSibling;
-            // Verifica se tem 10 (fixo) ou 11 (celular) digitos
-            if (telClean.length < 10 || telClean.length > 11) {
+            if (telClean.length !== 11) {
                 telInput.classList.add('error');
                 if(telMsg) telMsg.style.display = 'block';
                 temErro = true;
@@ -370,12 +378,10 @@
         });
 
         if (temErro) {
-            // Se tiver erro, não envia e rola a tela para cima
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
 
-        // Se passou em tudo, envia
         loading.style.display = 'block';
         btn.disabled = true;
         btn.style.opacity = '0.5';
