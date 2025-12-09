@@ -189,7 +189,6 @@
                         <option value="2º Ano Médio">2º Ano Médio</option>
                         <option value="3º Ano Médio">3º Ano Médio</option>
                     </optgroup>
-                    <option value="EJA">EJA (Jovens e Adultos)</option>
                     <option value="Não estuda">Não estuda</option>
                 </select>
             </div>
@@ -288,8 +287,8 @@
 </div>
 
 <script>
-    // --- INSIRA SUA URL DO APPS SCRIPT AQUI (A QUE TERMINA COM /exec) ---
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbySM_xyvbqeXCfy534Fd35KwrqpgC_XmrcaYTW1Oae8lMazRGGMwcxAgTm5GxG80ttX/exec'; 
+    // --- INSIRA SUA URL DO APPS SCRIPT AQUI ---
+    const scriptURL = 'COLE_AQUI_SUA_NOVA_URL_DO_GOOGLE_APPS_SCRIPT'; 
 
     const form = document.forms['myForm'];
     const loading = document.getElementById('loading');
@@ -297,7 +296,7 @@
     const formContent = document.getElementById('form-content');
     const successMessage = document.getElementById('success-message');
 
-    // --- LÓGICA DO CAMPO 'OUTRA DEFICIÊNCIA' ---
+    // Lógica do campo 'Outra Deficiência'
     const selectDeficiencia = document.getElementById('selectDeficiencia');
     const divOutra = document.getElementById('divOutraDeficiencia');
     const inputOutra = document.getElementById('inputOutraDeficiencia');
@@ -313,7 +312,7 @@
         }
     });
 
-    // --- MÁSCARAS ---
+    // Máscaras
     const mascaraCPF = (v) => {
         v = v.replace(/\D/g, "");
         v = v.replace(/(\d{3})(\d)/, "$1.$2");
@@ -350,7 +349,7 @@
         document.getElementById(id).addEventListener('input', (e) => e.target.value = mascaraTel(e.target.value));
     });
 
-    // --- VALIDAÇÃO LÓGICA ---
+    // Validação Lógica
     function validarCPF(cpf) {
         cpf = cpf.replace(/[^\d]+/g, '');
         if (cpf == '') return false;
