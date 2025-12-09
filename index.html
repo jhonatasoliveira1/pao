@@ -48,6 +48,16 @@
         input.error { border-color: var(--error-color); background-color: #fff8f8; }
         .error-msg { color: var(--error-color); font-size: 0.85em; display: none; margin-top: 5px; }
         
+        /* Campo Condicional (Outra Deficiência) */
+        #divOutraDeficiencia {
+            display: none; /* Começa escondido */
+            margin-top: 10px;
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid var(--primary-color);
+        }
+
         .btn-submit {
             display: block;
             width: 100%;
@@ -82,11 +92,6 @@
         <p class="intro">Reabilitação Visual na Saúde e na Educação - FAV/PCR</p>
 
         <form id="myForm" novalidate>
-            <div class="form-group">
-                <label for="Email">E-mail para contato *</label>
-                <input type="email" id="Email" name="Email" required placeholder="exemplo@email.com">
-            </div>
-
             <h2>Identificação da Criança/Adolescente</h2>
 
             <div class="form-group">
@@ -147,13 +152,18 @@
 
             <div class="form-group">
                 <label for="Deficiência">Deficiência *</label>
-                <select name="Deficiência" required>
+                <select name="Deficiência" id="selectDeficiencia" required>
                     <option value="" disabled selected>Selecione...</option>
                     <option value="Baixa Visão">Baixa Visão</option>
                     <option value="Cegueira">Cegueira</option>
                     <option value="Síndrome Congênita Zika (SCZV)">Síndrome Congênita Zika (SCZV)</option>
                     <option value="Outra">Outra</option>
                 </select>
+
+                <div id="divOutraDeficiencia">
+                    <label for="Outra Deficiencia">Qual a deficiência? *</label>
+                    <input type="text" name="Outra Deficiencia" id="inputOutraDeficiencia">
+                </div>
             </div>
 
             <div class="form-group">
@@ -167,7 +177,6 @@
                     <select name="Turno" required>
                         <option value="Manhã">Manhã</option>
                         <option value="Tarde">Tarde</option>
-                        <option value="Noite">Noite</option>
                         <option value="Integral">Integral</option>
                     </select>
                 </div>
@@ -257,13 +266,29 @@
 
 <script>
     // --- INSIRA SUA URL DO APPS SCRIPT AQUI (A QUE TERMINA COM /exec) ---
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbySM_xyvbqeXCfy534Fd35KwrqpgC_XmrcaYTW1Oae8lMazRGGMwcxAgTm5GxG80ttX/exec'; 
+    const scriptURL = 'COLE_AQUI_SUA_NOVA_URL_DO_GOOGLE_APPS_SCRIPT'; 
 
     const form = document.forms['myForm'];
     const loading = document.getElementById('loading');
     const btn = document.querySelector('.btn-submit');
     const formContent = document.getElementById('form-content');
     const successMessage = document.getElementById('success-message');
+
+    // --- LÓGICA DO CAMPO 'OUTRA DEFICIÊNCIA' ---
+    const selectDeficiencia = document.getElementById('selectDeficiencia');
+    const divOutra = document.getElementById('divOutraDeficiencia');
+    const inputOutra = document.getElementById('inputOutraDeficiencia');
+
+    selectDeficiencia.addEventListener('change', function() {
+        if (this.value === 'Outra') {
+            divOutra.style.display = 'block';
+            inputOutra.required = true; // Torna obrigatório se aparecer
+        } else {
+            divOutra.style.display = 'none';
+            inputOutra.required = false; // Tira obrigatoriedade se sumir
+            inputOutra.value = ''; // Limpa o campo para não enviar lixo
+        }
+    });
 
     // --- MÁSCARAS (Formatação Visual) ---
     const mascaraCPF = (v) => {
@@ -295,7 +320,7 @@
         return v;
     };
 
-    // Aplicar máscaras nos campos
+    // Aplicar máscaras
     document.getElementById('CPF').addEventListener('input', (e) => e.target.value = mascaraCPF(e.target.value));
     document.getElementById('CNS').addEventListener('input', (e) => e.target.value = mascaraCNS(e.target.value));
     document.getElementById('CEP').addEventListener('input', (e) => e.target.value = mascaraCEP(e.target.value));
@@ -362,7 +387,7 @@
             cnsMsg.style.display = 'none';
         }
 
-        // Validar Telefones Pessoais (Exige 11 digitos: DDD + 9)
+        // Validar Telefones
         ['Tel1', 'Tel2'].forEach(id => {
             const telInput = document.getElementById(id);
             const telClean = telInput.value.replace(/\D/g, "");
