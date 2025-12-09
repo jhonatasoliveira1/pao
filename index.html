@@ -125,7 +125,7 @@
                 <div class="form-group" style="flex: 1; min-width: 200px;">
                     <label for="CNS">Cartão SUS (CNS) *</label>
                     <input type="text" id="CNS" name="CNS" required placeholder="000 0000 0000 0000" maxlength="18">
-                    <span class="error-msg">O CNS deve ter exatamente 15 números.</span>
+                    <span class="error-msg">CNS Inválido.</span>
                 </div>
                 <div class="form-group" style="flex: 1; min-width: 200px;">
                     <label for="CPF">CPF *</label>
@@ -336,9 +336,7 @@
     const campoBairro = document.getElementById('end_bairro');
     const campoNumero = document.getElementById('end_numero');
 
-    // Quando sair do campo CEP (blur), busca o endereço
     campoCEP.addEventListener('blur', function() {
-        // Limpa caracteres não numéricos
         let cep = this.value.replace(/\D/g, '');
         
         if (cep.length === 8) {
@@ -353,7 +351,7 @@
                         campoLogradouro.value = data.logradouro;
                         campoBairro.value = data.bairro;
                         msgCEP.style.display = 'none';
-                        campoNumero.focus(); // Pula pro número pra facilitar
+                        campoNumero.focus(); 
                     } else {
                         msgCEP.innerText = 'CEP não encontrado.';
                         msgCEP.style.color = 'red';
@@ -421,7 +419,7 @@
         document.getElementById(id).addEventListener('input', (e) => e.target.value = mascaraTel(e.target.value));
     });
 
-    // Validação Lógica
+    // --- VALIDAÇÃO DE CPF (Lógica Oficial) ---
     function validarCPF(cpf) {
         cpf = cpf.replace(/[^\d]+/g, '');
         if (cpf == '') return false;
@@ -450,11 +448,32 @@
         return true;
     }
 
+    // --- VALIDAÇÃO DE CNS (Lógica Oficial) ---
+    function validarCNS(cns) {
+        cns = cns.replace(/\D/g, "");
+        if (cns.length !== 15) return false;
+        
+        let soma = 0;
+        let resto, dv;
+        
+        // Verifica se inicia com 1 ou 2 (Geração tipo 1)
+        // Ou 7, 8, 9 (Geração tipo 2 / Provisórios)
+        // A regra base para validação de número existente é a soma ponderada
+        
+        for (let i = 0; i < 15; i++) {
+            soma += parseInt(cns.charAt(i)) * (15 - i);
+        }
+        
+        // Se a soma for múltipla de 11, o dígito verificador confere
+        return soma % 11 === 0;
+    }
+
     form.addEventListener('submit', e => {
         e.preventDefault();
         
         let temErro = false;
 
+        // 1. Validar CPF
         const cpfInput = document.getElementById('CPF');
         const cpfMsg = cpfInput.nextElementSibling;
         if (!validarCPF(cpfInput.value)) {
@@ -466,10 +485,10 @@
             cpfMsg.style.display = 'none';
         }
 
+        // 2. Validar CNS
         const cnsInput = document.getElementById('CNS');
-        const cnsClean = cnsInput.value.replace(/\D/g, "");
         const cnsMsg = cnsInput.nextElementSibling;
-        if (cnsClean.length !== 15) {
+        if (!validarCNS(cnsInput.value)) {
             cnsInput.classList.add('error');
             cnsMsg.style.display = 'block';
             temErro = true;
@@ -478,6 +497,7 @@
             cnsMsg.style.display = 'none';
         }
 
+        // 3. Validar Telefones
         ['Tel1', 'Tel2'].forEach(id => {
             const telInput = document.getElementById(id);
             const telClean = telInput.value.replace(/\D/g, "");
@@ -492,18 +512,14 @@
             }
         });
 
-        // --- CONCATENAÇÃO DO ENDEREÇO ---
+        // 4. CONCATENAÇÃO DO ENDEREÇO
         const logradouro = document.getElementById('end_logradouro').value;
         const bairro = document.getElementById('end_bairro').value;
         const numero = document.getElementById('end_numero').value;
         const complemento = document.getElementById('end_complemento').value;
         
-        // Formato final: Rua Tal, Nº 123, Bairro Centro - Apto 101
         const enderecoCompleto = `${logradouro}, Nº ${numero}, ${bairro}${complemento ? ' - ' + complemento : ''}`;
-        
-        // Joga esse texto no campo oculto que o Google Sheets vai ler
         document.getElementById('enderecoFinal').value = enderecoCompleto;
-
 
         if (temErro) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
