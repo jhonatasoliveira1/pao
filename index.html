@@ -44,6 +44,9 @@
         }
         input:focus, select:focus { border-color: var(--primary-color); outline: none; }
         
+        /* Campo Readonly (Endereço Automático) */
+        input[readonly] { background-color: #e9ecef; color: #555; cursor: default; }
+
         /* Campo de carregamento do CEP */
         .cep-loading { 
             position: absolute; 
@@ -283,13 +286,15 @@
             <h2>Identificação da Unidade Solicitante</h2>
 
             <div class="form-group">
-                <label for="Unidade Solicitante">Nome da Unidade *</label>
-                <input type="text" name="Unidade Solicitante" required>
+                <label for="Unidade Solicitante">Nome da Unidade * (Digite para buscar)</label>
+                <input type="text" list="listaUnidades" id="inputUnidade" name="Unidade Solicitante" required placeholder="Ex: Escola Municipal..." autocomplete="off">
+                <datalist id="listaUnidades">
+                    </datalist>
             </div>
 
             <div class="form-group">
                 <label for="Endereço Unidade">Endereço da Unidade *</label>
-                <input type="text" name="Endereço Unidade" required>
+                <input type="text" id="inputEnderecoUnidade" name="Endereço Unidade" readonly required placeholder="Preenchimento automático">
             </div>
 
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -329,6 +334,172 @@
     const formContent = document.getElementById('form-content');
     const successMessage = document.getElementById('success-message');
     
+    // --- BANCO DE DADOS DAS UNIDADES E ENDEREÇOS ---
+    const unidadesData = {
+        "CMEI Brasília Teimosa": "Rua Delfin, 55, Brasília Teimosa",
+        "Colégio Integral em Piedade": "Piedade, Jaboatão dos Guararapes",
+        "Creche Escola Ana Rosa Falcão de Carvalho": "Rua João Lira, S/N, Santo Amaro",
+        "Creche Escola Associação Cristã Feminina": "Rua Vermelha, 96",
+        "Creche Escola Municipal do Bongi": "Rua Major Mário Portela, S/N, Bongi",
+        "Creche Escola Municipal do Ibura (Recife do Ibura)": "Av. Expedicionário Francisco Vitoriano, S/N, UR-10, COHAB/Ibura",
+        "Creche Escola Recife Governador Miguel Arraes": "Rua Doutor Gilardi Rodrigues dos Santos, 10",
+        "Creche Escola Recife Presidente Tancredo Neves": "Av. Dr. José Rufino, S/N",
+        "Creche Escola Recife Santa Luzia": "Rua Souza Bandeira, S/N, Torre",
+        "Creche Vinde a Mim as Criancinhas": "Rua Édeia, S/N, Madalena",
+        "EM Casa dos Ferroviários": "Rua Doutor José Cornélio, 84, Coqueiral",
+        "EM Dois Rios": "Rua Irmã Maria Evangelista, 83, COHAB",
+        "EM Doutor Antônio Correia": "Rua Teófilo Otoni, 960/980, Barro",
+        "EM Educador Paulo Freire": "Av. General Bento da Gama, 301, Ipsep",
+        "EM Engenheiro Henoch Coutinho de Melo": "Rua das Oficinas, 12, Brasília Teimosa",
+        "EM Historiador Flávio Guerra": "Rua Alto da Telha, 320, Passarinho",
+        "EM Hugo Gerdau": "Rua Coronel Mizael de Mendonça, S/N, San Martin",
+        "EM Irmã Terezinha Batista": "Rua Iguatu, S/N, Campina do Barreto",
+        "EM Jader Figueiredo de Andrade Silva": "Avenida Múcio Uchoa Cavalcante, 283, Engenho do Meio",
+        "EM Margarida Siqueira Pessoa": "Rua Córrego do Euclides (ou José Grande), 1307, Casa Amarela",
+        "EM Parque dos Milagres": "Rua Cantor Leandro, S/N, Barro",
+        "EM Pedro Alcântara": "Rua Três Morros, 43, Córrego do Jenipapo",
+        "EM Presbítero José Bezerra": "Avenida Norte Miguel Arraes de Alencar, 7696, Macaxeira",
+        "EM Prof. Moacyr de Albuquerque": "Rua Córrego da Areia, S/N, Nova Descoberta",
+        "EM Professor Solano Magalhães": "Rua Jamil Asfora, S/N, Pina",
+        "EM São João Batista": "Av. Aníbal Benévolo, 1800, Linha do Tiro",
+        "EM Sítio do Berardo": "Rua Quatro de Outubro, S/N, Madalena/Prado",
+        "EM Sociólogo Gilberto Freyre": "Rua Professor Cláudio Selva, 116, Dois Irmãos",
+        "EMTI Alto da Guabiraba": "Rua Presidente Costa e Silva, 250, Brejo da Guabiraba",
+        "EMTI da Mangabeira": "Rua Nicéas Arcoverde Gusmão, S/N, Mangabeira",
+        "EMTI Maria de Sampaio Lucena": "Av. Pernambuco, S/N, COHAB",
+        "EMTI Prof. José da Costa Porto": "Rua Cabo Eutrópio, 660",
+        "Escola Municipal Abílio Gomes": "Rua Jorge Couceiro da Costa Eiras, S/N, Boa Viagem",
+        "Escola Municipal Almirante Soares Dutra": "Rua Cmte. Arnaldo da Costa Varela, Cabanga",
+        "Escola Municipal Alto da Bela Vista": "Rua Alto da Bela, 338, Totó",
+        "Escola Municipal Alto Santa Terezinha": "Avenida Aníbal Benévolo, S/N, Beberibe",
+        "Escola Municipal Aníbal Varejão": "Rua João Ferreira, 427, Sancho",
+        "Escola Municipal Antônio Tibúrcio": "Rua Tamboara, 356",
+        "Escola Municipal Balbina Menelau": "Rua João de Andrade, 82, Jardim São Paulo",
+        "Escola Municipal Capela Santo Antônio": "Rua São Marcos, S/N, Ilha de Deus",
+        "Escola Municipal Casarão do Barbalho": "Estrada do Barbalho, 1595, Iputinga",
+        "Escola Municipal Célia Arraes": "Rua José Noya, 131, Várzea",
+        "Escola Municipal Cícero Franklin Cordeiro": "Felipe dos Santos, 81, UR-05, Ibura",
+        "Escola Municipal Compositor Capiba": "Rua Othon Paraíso, 375, Torreão",
+        "Escola Municipal Compositor Levino Ferreira": "Rua Córrego José Grande, 500, Casa Amarela",
+        "Escola Municipal Córrego da Bica": "Rua Córrego da Bica, S/N, Passarinho",
+        "Escola Municipal Córrego do Euclides": "Rua Tibiriçá, 48, Morro da Conceição",
+        "Escola Municipal da Guabiraba": "Rua Cassiterita, 295",
+        "Escola Municipal da Iputinga": "Rua Coronel Fernando Furtado, 479, Iputinga",
+        "Escola Municipal da Mangabeira": "Rua do Cinema, 287, Mangabeira",
+        "Escola Municipal Darcy Ribeiro": "Rua Odete Monteiro, 450, Cordeiro",
+        "Escola Municipal de Água Fria": "Rua dos Craveiros, 500, Campina do Barreto",
+        "Escola Municipal de Beberibe": "Rua Melânio de Barros Correia, 25, Beberibe",
+        "Escola Municipal de Tejipió": "Rua Tutóia, 165, Tejipió",
+        "Escola Municipal Deocleciano Oliveira Lima": "Rua Córrego da Areia, 568, Macaxeira",
+        "Escola Municipal Deputado Fernando Sampaio": "Rua Alto Antônio Félix, 105, Nova Descoberta",
+        "Escola Municipal Diná de Oliveira": "Rua São Mateus, S/N, Iputinga",
+        "Escola Municipal do Barro": "Rua Guaragibe, 117, Barro",
+        "Escola Municipal do Coque": "Rua Mirandópolis, 35, Ilha Joana Bezerra",
+        "Escola Municipal do Leão": "Rua Bruno Veloso, 300, Boa Viagem",
+        "Escola Municipal Dom Hélder Câmara": "Rua Henrique Dias, 278, Recife",
+        "Escola Municipal Dona Luci Silva Lima": "Av. Mônaco, 1138, Imbiribeira",
+        "Escola Municipal Emídio Dantas Barreto": "Avenida da Saudade, 303, Santo Amaro",
+        "Escola Municipal Engenheiro Edinaldo Miranda de Oliveira": "Rua Inácio Galvão dos Santos, 304, Encruzilhada",
+        "Escola Municipal Engenheiro Guilherme Diniz": "Rua Teresa Margarida, S/N, UR-6",
+        "Escola Municipal Engenheiro Umberto Gondim": "Rua Ivonete Ferreira da Silva, 13, Brasília Teimosa",
+        "Escola Municipal Engenho do Meio": "Rua Bom Pastor, S/N, Engenho do Meio",
+        "Escola Municipal Futuro Feliz": "Rua Ibirajuba, 440, Três Carneiros Baixo/Ibura",
+        "Escola Municipal General San Martin": "Av. General San Martin, 1864, San Martin",
+        "Escola Municipal Governador Miguel Arraes de Alencar": "Rua Tapajós, 419, Areias",
+        "Escola Municipal Henfil": "Travessa 6 de Março, 10, Várzea",
+        "Escola Municipal Inês Soares de Lima": "Rua 14 de Novembro, S/N, Imbiribeira",
+        "Escola Municipal Isaac Pereira da Silva": "Rua Oiticica Lins, 211, Areias",
+        "Escola Municipal Jardim Mauriceia": "Av. Nicolau Copérnico, 1107, Imbiribeira",
+        "Escola Municipal Jardim Monte Verde": "Avenida Chapada do Araripe, 39, COHAB",
+        "Escola Municipal Jardim Uchôa": "Rua Jupiatá, 211, Areias",
+        "Escola Municipal João Pessoa Guerra": "Rua Isaac Buril, 107, Várzea",
+        "Escola Municipal João XXIII": "Estrada do Caiara, 350, Iputinga",
+        "Escola Municipal Josefina Marinho": "Rua Córrego José Grande, 1316, Alto José do Pinho",
+        "Escola Municipal Júlio Vicente Alves de Araújo": "Praça da Conceição, 468, Morro da Conceição",
+        "Escola Municipal Manoel Rolim": "Rua Pajussara, 166, Jardim São Paulo",
+        "Escola Municipal Margarida Serpa Cossart": "Rua Mecejana, 09, COHAB UR-02, Ibura",
+        "Escola Municipal Mércia de Albuquerque Ferreira": "Rua Tabaiares, 182, Ilha do Retiro",
+        "Escola Municipal Nova Descoberta": "Rua Jornalista Waldete Agra, 100, Passarinho",
+        "Escola Municipal Nova Morada": "Rua Eliane Fragoso do Nascimento, 24, Caxangá",
+        "Escola Municipal Novo Pina": "Rua Eurico Vitrúvio, 236, Pina",
+        "Escola Municipal Oswaldo Lima Filho": "Av. Domingos Ferreira, 1040, Pina",
+        "Escola Municipal Padre Donino": "Praça de Casa Forte, 442, Casa Forte",
+        "Escola Municipal Pais e Filhos": "Rua Dancing Days, 21, Imbiribeira",
+        "Escola Municipal Paroquial Cristo Rei": "Rua Dom Manoel da Costa, S/N, Torre",
+        "Escola Municipal Paz e Amor": "Rua Jornalista Edson Régis, 216, Ibura",
+        "Escola Municipal Pedro Alcântara": "Rua Três Morros, 43, Córrego do Jenipapo",
+        "Escola Municipal Pintor Lula Cardoso Ayres": "Rua Álvaro Ferraz, Quadra P, Jordão Baixo",
+        "Escola Municipal Poeta Carlos Pena Filho": "Avenida Liberdade, 461, Jardim São Paulo",
+        "Escola Municipal Poeta João Cabral de Melo Neto": "Av. Encanta Moça, 377, Pina",
+        "Escola Municipal Poeta Manuel Bandeira": "CEP 50070-440",
+        "Escola Municipal Poeta Paulo Bandeira da Cruz": "Rua Panelas, 28, COHAB",
+        "Escola Municipal Poeta Solano Trindade": "Rua Manuel Silva, 134, Água Fria",
+        "Escola Municipal Potiguar Matos": "Rua 21 de Abril, 2191, San Martin",
+        "Escola Municipal Prof. Adauto Pontes": "Rua Sertânia, 35, Jordão Alto",
+        "Escola Municipal Prof. Antônio de Brito Alves": "Rua Ernesto Cavalcante, 41, Mustardinha",
+        "Escola Municipal Prof. Mauro Mota": "Rua Alto da Brasileira, S/N, Nova Descoberta",
+        "Escola Municipal Prof. Ricardo Gama": "Rua Guaira, 160, Linha do Tiro",
+        "Escola Municipal Prof. Simões Barbosa": "Avenida Dois Rios / Rua Ecoporanga, S/N, Ibura",
+        "Escola Municipal Professora Hélia Maria Pereira": "Rua Alice Gomes, 37, Campo Grande",
+        "Escola Municipal Professora Primitiva de Barros Silva": "Rua Ator Elpídio Câmara, 122, Jardim São Paulo",
+        "Escola Municipal Rozemar de Macedo Lima": "Av. Norte Miguel Arraes de Alencar, 5400, Casa Amarela",
+        "Escola Municipal Santa Luzia": "Rua Professor Caldas Filho, 186, Estância",
+        "Escola Municipal Santa Maria": "Rua Acaiaca, 70, Alto José do Pinho",
+        "Escola Municipal Santa Maria Goretti": "Rua Santa Maria Goretti, 300, Vasco da Gama",
+        "Escola Municipal Santo Amaro": "Avenida Norte, 570, Santo Amaro",
+        "Escola Municipal Santo Antônio do Caçote": "Rua Guaraci, 16, Areias",
+        "Escola Municipal Sede da Sabedoria": "Rua Artemis, 85, Santo Amaro",
+        "Escola Municipal Soldado José Antônio do Nascimento": "Rua Carlos Porto Carreiro, 86, Boa Vista",
+        "Escola Municipal Vila Santa Luzia": "Rua Elizeu Cavalcanti, 52, Cordeiro",
+        "Escola Municipal Virgem Poderosa": "Rua Leonardo Bezerra Cavalcante, 116, Parnamirim",
+        "Escola Municipal Zumbi dos Palmares": "Rua Vasconcelos Bittencourt, 35, Várzea",
+        "CAPS Luiz Cerqueira": "Rua Álvares de Azevedo, 80, Santo Amaro",
+        "Casa de Acolhida Temporária Doce Lar": "Rua Ijuí, 57, Torrões",
+        "Casa de Acolhimento Lar Esperança": "Rua Luís Pereira de Farias, 185, Afogados",
+        "CER-IV FAV (Fundação Altino Ventura)": "Av. Maurício de Nassau, 2075, Iputinga",
+        "DDAS (Divisão Distrital de Atenção à Saúde)": "Rua São Domingos Sávio, 172, Alto José Bonifácio",
+        "Distrito Sanitário 2": "Rua Antônio Rangel, 208, Encruzilhada",
+        "Distrito Sanitário 3 (Sede)": "Rua Xavantes, 205, Casa Amarela",
+        "NAAHS (Núcleo de Atividades Altas Habilidades)": "Estrada do Arraial, 4754, Casa Amarela",
+        "UBT Professor Joaquim Cavalcante": "Av. Joaquim Cavalcante / Estrada do Forte, 1350, Torrões",
+        "Upinha Emocy Krause": "Rua Cantora Clara Nunes, S/N, Torre",
+        "US Ivo Rabelo": "Av. Campina Grande, S/N, UR-01",
+        "USF Água Viva": "Rua Porto Nacional, 07",
+        "USF Aldenir Ferraz": "Av. Engenho Babilônia, 168, COHAB",
+        "USF Alto do Capitão": "Rua Tupiraçaba, S/N",
+        "USF Cidade Operária": "Rua Emílio Monteiro da Fonseca, 1688",
+        "USF Ilha de Deus": "Rua José, S/N, Ilha de Deus",
+        "USF Ilha de Santa Terezinha": "Rua Artemis, 09, Santo Amaro",
+        "USF Rio Pajeú": "Rua Rio Pajeú, S/N",
+        "USF Sítio das Palmeiras": "Rua Felixlândia, 176, Cordeiro",
+        "USF Sítio Grande": "Av. Luxemburgo, 240, Imbiribeira"
+    };
+
+    // Preencher a lista de sugestões (Datalist)
+    const datalist = document.getElementById('listaUnidades');
+    Object.keys(unidadesData).forEach(nome => {
+        const option = document.createElement('option');
+        option.value = nome;
+        datalist.appendChild(option);
+    });
+
+    // Evento para preencher endereço automaticamente
+    const inputUnidade = document.getElementById('inputUnidade');
+    const inputEndereco = document.getElementById('inputEnderecoUnidade');
+
+    inputUnidade.addEventListener('input', function() {
+        const nomeSelecionado = this.value;
+        if (unidadesData[nomeSelecionado]) {
+            inputEndereco.value = unidadesData[nomeSelecionado];
+        } else {
+            // Se o usuário digitar algo que não está na lista, permite editar ou deixa em branco?
+            // Por padrão, deixamos em branco para forçar escolher da lista, ou pode deixar livre.
+            // Aqui vamos limpar se não bater com a lista para evitar erro.
+            inputEndereco.value = "";
+        }
+    });
+
+
     // --- LÓGICA DE CEP (API VIACEP) ---
     const campoCEP = document.getElementById('campoCEP');
     const msgCEP = document.getElementById('msgCEP');
@@ -419,7 +590,7 @@
         document.getElementById(id).addEventListener('input', (e) => e.target.value = mascaraTel(e.target.value));
     });
 
-    // --- VALIDAÇÃO DE CPF (Lógica Oficial) ---
+    // --- VALIDAÇÃO DE CPF ---
     function validarCPF(cpf) {
         cpf = cpf.replace(/[^\d]+/g, '');
         if (cpf == '') return false;
@@ -448,23 +619,14 @@
         return true;
     }
 
-    // --- VALIDAÇÃO DE CNS (Lógica Oficial) ---
+    // --- VALIDAÇÃO DE CNS ---
     function validarCNS(cns) {
         cns = cns.replace(/\D/g, "");
         if (cns.length !== 15) return false;
-        
         let soma = 0;
-        let resto, dv;
-        
-        // Verifica se inicia com 1 ou 2 (Geração tipo 1)
-        // Ou 7, 8, 9 (Geração tipo 2 / Provisórios)
-        // A regra base para validação de número existente é a soma ponderada
-        
         for (let i = 0; i < 15; i++) {
             soma += parseInt(cns.charAt(i)) * (15 - i);
         }
-        
-        // Se a soma for múltipla de 11, o dígito verificador confere
         return soma % 11 === 0;
     }
 
@@ -473,7 +635,7 @@
         
         let temErro = false;
 
-        // 1. Validar CPF
+        // Validar CPF
         const cpfInput = document.getElementById('CPF');
         const cpfMsg = cpfInput.nextElementSibling;
         if (!validarCPF(cpfInput.value)) {
@@ -485,7 +647,7 @@
             cpfMsg.style.display = 'none';
         }
 
-        // 2. Validar CNS
+        // Validar CNS
         const cnsInput = document.getElementById('CNS');
         const cnsMsg = cnsInput.nextElementSibling;
         if (!validarCNS(cnsInput.value)) {
@@ -497,7 +659,7 @@
             cnsMsg.style.display = 'none';
         }
 
-        // 3. Validar Telefones
+        // Validar Telefones
         ['Tel1', 'Tel2'].forEach(id => {
             const telInput = document.getElementById(id);
             const telClean = telInput.value.replace(/\D/g, "");
@@ -512,12 +674,11 @@
             }
         });
 
-        // 4. CONCATENAÇÃO DO ENDEREÇO
+        // --- CONCATENAÇÃO DO ENDEREÇO DA CRIANÇA ---
         const logradouro = document.getElementById('end_logradouro').value;
         const bairro = document.getElementById('end_bairro').value;
         const numero = document.getElementById('end_numero').value;
         const complemento = document.getElementById('end_complemento').value;
-        
         const enderecoCompleto = `${logradouro}, Nº ${numero}, ${bairro}${complemento ? ' - ' + complemento : ''}`;
         document.getElementById('enderecoFinal').value = enderecoCompleto;
 
