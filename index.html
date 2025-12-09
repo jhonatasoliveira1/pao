@@ -50,7 +50,7 @@
         
         /* Campo Condicional (Outra Deficiência) */
         #divOutraDeficiencia {
-            display: none; /* Começa escondido */
+            display: none;
             margin-top: 10px;
             background-color: #f0f8ff;
             padding: 10px;
@@ -92,6 +92,7 @@
         <p class="intro">Reabilitação Visual na Saúde e na Educação - FAV/PCR</p>
 
         <form id="myForm" novalidate>
+            
             <h2>Identificação da Criança/Adolescente</h2>
 
             <div class="form-group">
@@ -159,7 +160,6 @@
                     <option value="Síndrome Congênita Zika (SCZV)">Síndrome Congênita Zika (SCZV)</option>
                     <option value="Outra">Outra</option>
                 </select>
-
                 <div id="divOutraDeficiencia">
                     <label for="Outra Deficiencia">Qual a deficiência? *</label>
                     <input type="text" name="Outra Deficiencia" id="inputOutraDeficiencia">
@@ -168,7 +168,30 @@
 
             <div class="form-group">
                 <label for="Escolaridade">Escolaridade *</label>
-                <input type="text" name="Escolaridade" required placeholder="Ex: 5º Ano Fundamental">
+                <select name="Escolaridade" required>
+                    <option value="" disabled selected>Selecione...</option>
+                    <option value="Educação Infantil">Educação Infantil</option>
+                    <optgroup label="Ensino Fundamental I">
+                        <option value="1º Ano Fundamental">1º Ano Fundamental</option>
+                        <option value="2º Ano Fundamental">2º Ano Fundamental</option>
+                        <option value="3º Ano Fundamental">3º Ano Fundamental</option>
+                        <option value="4º Ano Fundamental">4º Ano Fundamental</option>
+                        <option value="5º Ano Fundamental">5º Ano Fundamental</option>
+                    </optgroup>
+                    <optgroup label="Ensino Fundamental II">
+                        <option value="6º Ano Fundamental">6º Ano Fundamental</option>
+                        <option value="7º Ano Fundamental">7º Ano Fundamental</option>
+                        <option value="8º Ano Fundamental">8º Ano Fundamental</option>
+                        <option value="9º Ano Fundamental">9º Ano Fundamental</option>
+                    </optgroup>
+                    <optgroup label="Ensino Médio">
+                        <option value="1º Ano Médio">1º Ano Médio</option>
+                        <option value="2º Ano Médio">2º Ano Médio</option>
+                        <option value="3º Ano Médio">3º Ano Médio</option>
+                    </optgroup>
+                    <option value="EJA">EJA (Jovens e Adultos)</option>
+                    <option value="Não estuda">Não estuda</option>
+                </select>
             </div>
 
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -282,15 +305,15 @@
     selectDeficiencia.addEventListener('change', function() {
         if (this.value === 'Outra') {
             divOutra.style.display = 'block';
-            inputOutra.required = true; // Torna obrigatório se aparecer
+            inputOutra.required = true;
         } else {
             divOutra.style.display = 'none';
-            inputOutra.required = false; // Tira obrigatoriedade se sumir
-            inputOutra.value = ''; // Limpa o campo para não enviar lixo
+            inputOutra.required = false;
+            inputOutra.value = '';
         }
     });
 
-    // --- MÁSCARAS (Formatação Visual) ---
+    // --- MÁSCARAS ---
     const mascaraCPF = (v) => {
         v = v.replace(/\D/g, "");
         v = v.replace(/(\d{3})(\d)/, "$1.$2");
@@ -320,7 +343,6 @@
         return v;
     };
 
-    // Aplicar máscaras
     document.getElementById('CPF').addEventListener('input', (e) => e.target.value = mascaraCPF(e.target.value));
     document.getElementById('CNS').addEventListener('input', (e) => e.target.value = mascaraCNS(e.target.value));
     document.getElementById('CEP').addEventListener('input', (e) => e.target.value = mascaraCEP(e.target.value));
@@ -362,7 +384,6 @@
         
         let temErro = false;
 
-        // Validar CPF
         const cpfInput = document.getElementById('CPF');
         const cpfMsg = cpfInput.nextElementSibling;
         if (!validarCPF(cpfInput.value)) {
@@ -374,7 +395,6 @@
             cpfMsg.style.display = 'none';
         }
 
-        // Validar CNS
         const cnsInput = document.getElementById('CNS');
         const cnsClean = cnsInput.value.replace(/\D/g, "");
         const cnsMsg = cnsInput.nextElementSibling;
@@ -387,7 +407,6 @@
             cnsMsg.style.display = 'none';
         }
 
-        // Validar Telefones
         ['Tel1', 'Tel2'].forEach(id => {
             const telInput = document.getElementById(id);
             const telClean = telInput.value.replace(/\D/g, "");
