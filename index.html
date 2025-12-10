@@ -29,16 +29,26 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        h1 { text-align: center; color: var(--primary-color); margin-bottom: 10px; }
+        h1 { text-align: center; color: var(--primary-color); margin-bottom: 5px; font-size: 1.8em; }
+        h4 { text-align: center; color: #555; margin-top: 0; margin-bottom: 15px; font-weight: 600; }
         h2 { border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 30px; color: var(--primary-color); }
         h3 { color: #555; margin-top: 20px; font-size: 1.1em; border-left: 4px solid var(--primary-color); padding-left: 10px; }
-        .intro { text-align: center; font-size: 0.9em; color: #666; margin-bottom: 30px; }
+        
+        .intro { 
+            text-align: center; 
+            font-size: 0.95em; 
+            color: #666; 
+            margin-bottom: 30px; 
+            background-color: #eef2f7;
+            padding: 15px;
+            border-radius: 5px;
+        }
         
         .form-group { margin-bottom: 15px; position: relative; }
         label { display: block; margin-bottom: 5px; font-weight: 600; }
         .note { font-size: 0.85em; color: #666; display: block; margin-top: -3px; margin-bottom: 5px;}
         
-        input, select, textarea {
+        input[type="text"], input[type="date"], input[type="number"], input[type="tel"], input[type="email"], select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -47,6 +57,25 @@
             box-sizing: border-box;
         }
         input:focus, select:focus { border-color: var(--primary-color); outline: none; }
+        
+        /* Estilos para Checkboxes (Deficiência) */
+        .checkbox-group {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .checkbox-item input {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
         
         /* Campo Readonly (Endereço Automático) */
         input[readonly] { background-color: #e9ecef; color: #555; cursor: default; }
@@ -63,17 +92,10 @@
             font-size: 0.95em;
         }
 
-        /* Campo de carregamento do CEP */
         .cep-loading { 
-            position: absolute; 
-            right: 10px; 
-            top: 38px; 
-            font-size: 0.8em; 
-            color: var(--primary-color); 
-            display: none; 
+            position: absolute; right: 10px; top: 38px; font-size: 0.8em; color: var(--primary-color); display: none; 
         }
 
-        /* Estilos de Erro */
         input.error { border-color: var(--error-color); background-color: #fff8f8; }
         .error-msg { color: var(--error-color); font-size: 0.85em; display: none; margin-top: 5px; }
         
@@ -118,7 +140,11 @@
 
     <div id="form-content">
         <h1>PROJETO ALÉM DO OLHAR</h1>
-        <p class="intro">Reabilitação Visual na Saúde e na Educação - FAV/PCR</p>
+        <h4>FICHA DE SOLICITAÇÃO PARA INCLUSÃO NO PROJETO ALÉM DO OLHAR - FAV/PCR</h4>
+        
+        <p class="intro">
+            Projeto voltado para crianças e adolescentes dos 5 aos 17 anos, com baixa visão, cegueira ou Síndrome Congênita do Zika Virus (SCZV), munícipes ou estudantes da rede de educação do Recife.
+        </p>
 
         <form id="myForm" novalidate>
             
@@ -131,13 +157,14 @@
 
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 150px;">
-                    <label for="Idade">Idade (anos) *</label>
-                    <input type="number" name="Idade" required>
+                    <label for="Data Nascimento">Data de Nascimento *</label>
+                    <input type="date" id="DataNascimento" name="Data Nascimento" required>
                 </div>
                 <div class="form-group" style="flex: 1; min-width: 150px;">
-                    <label for="Data Nascimento">Data de Nascimento *</label>
-                    <input type="date" name="Data Nascimento" required>
+                    <label for="IdadeVisual">Idade (Cálculo Automático)</label>
+                    <input type="text" id="IdadeVisual" readonly placeholder="Preencha a data ao lado">
                 </div>
+                <input type="hidden" name="Idade" id="IdadeEnvio">
             </div>
 
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -181,21 +208,23 @@
             </div>
 
             <div class="form-group">
-                <label for="Deficiência">Deficiência (Motivo do encaminhamento) *</label>
-                <select name="Deficiência" id="selectDeficiencia" required>
-                    <option value="" disabled selected>Selecione...</option>
-                    <option value="Sinais e sintomas de dificuldades visuais">Sinais e sintomas de dificuldades visuais</option>
-                    <option value="Síndrome Congênita do Zika Vírus (SCZV)">Síndrome Congênita do Zika Vírus (SCZV)</option>
-                    <option value="Deficiência visual - Baixa visão">Deficiência visual - Baixa visão</option>
-                    <option value="Deficiência visual - Cegueira">Deficiência visual - Cegueira</option>
-                    <option value="Múltiplas deficiências associadas à baixa visão ou cegueira">Múltiplas deficiências associadas à baixa visão ou cegueira</option>
-                    <option value="Autismo associado à baixa visão ou cegueira">Autismo associado à baixa visão ou cegueira</option>
-                    <option value="Outra">Outra</option>
-                </select>
+                <label>Deficiência (Pode marcar mais de uma) *</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" class="def-check" value="Sinais e sintomas de dificuldades visuais"> Sinais e sintomas de dificuldades visuais</label>
+                    <label class="checkbox-item"><input type="checkbox" class="def-check" value="Síndrome Congênita do Zika Vírus (SCZV)"> Síndrome Congênita do Zika Vírus (SCZV)</label>
+                    <label class="checkbox-item"><input type="checkbox" class="def-check" value="Deficiência visual - Baixa visão"> Deficiência visual - Baixa visão</label>
+                    <label class="checkbox-item"><input type="checkbox" class="def-check" value="Deficiência visual - Cegueira"> Deficiência visual - Cegueira</label>
+                    <label class="checkbox-item"><input type="checkbox" class="def-check" value="Múltiplas deficiências associadas"> Múltiplas deficiências associadas</label>
+                    <label class="checkbox-item"><input type="checkbox" class="def-check" value="Autismo associado à baixa visão ou cegueira"> Autismo associado à baixa visão ou cegueira</label>
+                    <label class="checkbox-item"><input type="checkbox" class="def-check" id="checkOutra" value="Outra"> Outra</label>
+                </div>
+                
                 <div id="divOutraDeficiencia">
-                    <label for="Outra Deficiencia">Qual a deficiência? *</label>
+                    <label for="Outra Deficiencia">Qual a outra deficiência?</label>
                     <input type="text" name="Outra Deficiencia" id="inputOutraDeficiencia">
                 </div>
+                
+                <input type="hidden" name="Deficiência" id="DeficienciaFinal">
             </div>
 
             <div class="form-group">
@@ -231,6 +260,7 @@
                     <select name="Turno" required>
                         <option value="Manhã">Manhã</option>
                         <option value="Tarde">Tarde</option>
+                        <option value="Integral">Integral</option>
                         <option value="Não estuda">Não estuda</option>
                     </select>
                 </div>
@@ -365,9 +395,34 @@
     const formContent = document.getElementById('form-content');
     const successMessage = document.getElementById('success-message');
     
+    // --- LÓGICA DE IDADE AUTOMÁTICA ---
+    const inputNascimento = document.getElementById('DataNascimento');
+    const inputIdadeVisual = document.getElementById('IdadeVisual');
+    const inputIdadeEnvio = document.getElementById('IdadeEnvio');
+
+    inputNascimento.addEventListener('change', function() {
+        if(this.value) {
+            const today = new Date();
+            const birthDate = new Date(this.value);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            // Preenche o campo visual e o oculto
+            if (age >= 0) {
+                inputIdadeVisual.value = age + " anos";
+                inputIdadeEnvio.value = age;
+            } else {
+                inputIdadeVisual.value = "Data inválida";
+                inputIdadeEnvio.value = "";
+            }
+        }
+    });
+
     // --- BANCO DE DADOS DAS UNIDADES E ENDEREÇOS ---
     const unidadesData = {
-        "Outra": "", // Opção para destravar manual
+        "Outra": "", 
         "CMEI Brasília Teimosa": "Rua Delfin, 55, Brasília Teimosa",
         "Colégio Integral em Piedade": "Piedade, Jaboatão dos Guararapes",
         "Creche Escola Ana Rosa Falcão de Carvalho": "Rua João Lira, S/N, Santo Amaro",
@@ -588,13 +643,13 @@
         }
     });
 
-    // Lógica do campo 'Outra Deficiência'
-    const selectDeficiencia = document.getElementById('selectDeficiencia');
+    // Lógica do campo 'Outra Deficiência' (checkboxes)
+    const checkOutra = document.getElementById('checkOutra');
     const divOutra = document.getElementById('divOutraDeficiencia');
     const inputOutra = document.getElementById('inputOutraDeficiencia');
 
-    selectDeficiencia.addEventListener('change', function() {
-        if (this.value === 'Outra') {
+    checkOutra.addEventListener('change', function() {
+        if (this.checked) {
             divOutra.style.display = 'block';
             inputOutra.required = true;
         } else {
@@ -743,6 +798,30 @@
             temErro = true;
         }
 
+        // --- PREPARAÇÃO DO CAMPO DE DEFICIÊNCIA (CHECKBOXES) ---
+        // Coleta todas as marcadas
+        const checkedBoxes = document.querySelectorAll('.def-check:checked');
+        const values = [];
+        checkedBoxes.forEach(checkbox => {
+            if (checkbox.value === 'Outra') {
+                 // Se marcou Outra, pega o que foi digitado no campo de texto
+                 const textOutra = document.getElementById('inputOutraDeficiencia').value;
+                 if(textOutra) values.push("Outra: " + textOutra);
+            } else {
+                values.push(checkbox.value);
+            }
+        });
+        
+        // Se nenhuma foi marcada, precisa avisar (validação manual simples)
+        if (values.length === 0) {
+             alert("Por favor, selecione ao menos uma deficiência.");
+             temErro = true;
+        } else {
+             // Junta tudo com vírgula e manda pro campo oculto
+             document.getElementById('DeficienciaFinal').value = values.join(", ");
+        }
+
+
         // --- CONCATENAÇÃO DO ENDEREÇO DA CRIANÇA ---
         const logradouro = document.getElementById('end_logradouro').value;
         const bairro = document.getElementById('end_bairro').value;
@@ -752,7 +831,6 @@
         document.getElementById('enderecoFinal').value = enderecoCompleto;
 
         // --- TRATAMENTO DO NOME DA UNIDADE (SE FOR OUTRA) ---
-        // Se a pessoa selecionou Outra, substituímos o valor "Outra" pelo que ela digitou
         if (inputUnidade.value === 'Outra') {
             inputUnidade.value = inputNomeOutra.value;
         }
