@@ -1,78 +1,214 @@
-<script>
-        // COLOQUE SUA NOVA URL AQUI
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxN2Q9yAarhZNyoSMKWXk6330UMOmjYHFatE5nCqubfPHvcbcbiapk2EJ3bYXMsMJJX/exec'; 
-
-        let pacientes = [];
-        const datalist = document.getElementById('listaPacientes');
-        const inputBusca = document.getElementById('buscaPaciente');
-
-        // 1. Carrega lista ao abrir a página
-        window.onload = () => {
-            inputBusca.placeholder = "Carregando banco de dados...";
-            
-            // Chama a ação específica 'lista_completa'
-            fetch(scriptURL + "?action=lista_completa")
-                .then(r => r.json())
-                .then(data => {
-                    pacientes = data;
-                    inputBusca.placeholder = "Digite Nome ou CPF...";
-                    
-                    data.forEach(p => {
-                        let opt = document.createElement('option');
-                        // Cria a opção de busca: "JOAO SILVA | CPF: 123..."
-                        opt.value = `${p.nome} | CPF: ${p.cpf}`;
-                        datalist.appendChild(opt);
-                    });
-                })
-                .catch(err => {
-                    alert("Erro ao carregar pacientes. Verifique o Script.");
-                });
-        };
-
-        // 2. Quando seleciona um paciente
-        inputBusca.addEventListener('input', function() {
-            let val = this.value;
-            // Procura na memória o paciente selecionado
-            let p = pacientes.find(x => `${x.nome} | CPF: ${x.cpf}` === val);
-            
-            if(p) {
-                document.getElementById('nomeFinal').value = p.nome;
-                document.getElementById('cpfFinal').value = p.cpf;
-            }
-        });
-
-        // 3. Salvar Agendamento
-        function salvarAgendamento() {
-            let nome = document.getElementById('nomeFinal').value;
-            let cpf = document.getElementById('cpfFinal').value;
-            let data = document.getElementById('dataAgenda').value;
-            let btn = document.getElementById('btnSalvar');
-            let msg = document.getElementById('msg');
-
-            if(!nome || !data) { alert("Preencha todos os campos!"); return; }
-
-            btn.disabled = true;
-            btn.innerText = "Salvando...";
-
-            let formData = new FormData();
-            formData.append('action', 'agendar'); // Ação para salvar na aba Atendimentos
-            formData.append('nome', nome);
-            formData.append('cpf', cpf);
-            formData.append('data_agendamento', data);
-
-            fetch(scriptURL, { method: 'POST', body: formData })
-                .then(r => r.json())
-                .then(res => {
-                    if(res.result === 'success') {
-                        msg.innerText = "✅ Agendado com sucesso!";
-                        msg.style.color = "green";
-                        setTimeout(() => location.reload(), 2000);
-                    } else {
-                        msg.innerText = "Erro ao salvar.";
-                        btn.disabled = false;
-                    }
-                });
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento - Recepção</title>
+    <style>
+        :root {
+            --primary-color: #0056b3; /* Azul para identificar Recepção */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
         }
-    </script>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary-color);
+        }
+        h1 { text-align: center; color: var(--primary-color); margin-bottom: 30px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus { border-color: var(--primary-color); outline: none; }
+        
+        /* Campo Readonly (Cinza) */
+        input[readonly] { background-color: #e9ecef; color: #555; cursor: not-allowed; font-weight: bold; }
+
+        /* Área de Busca */
+        .search-area {
+            background: #eef5f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 25px;
+        }
+        #status-busca { font-size: 0.85em; color: #666; font-style: italic; margin-top: 5px; display: block; }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 30px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #004494; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #msg { text-align: center; margin-top: 20px; font-weight: bold; min-height: 25px; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Agendar Paciente</h1>
+
+    <div class="search-area">
+        <label>🔎 Buscar Paciente (Cadastro):</label>
+        <input type="text" list="listaPacientes" id="buscaPaciente" placeholder="Carregando banco de dados..." disabled autocomplete="off">
+        <span id="status-busca">Aguarde, conectando ao sistema...</span>
+        <datalist id="listaPacientes"></datalist>
+    </div>
+
+    <div class="form-group">
+        <label>Nome Confirmado:</label>
+        <input type="text" id="nomeFinal" readonly>
+    </div>
+    
+    <div class="form-group">
+        <label>CPF Confirmado:</label>
+        <input type="text" id="cpfFinal" readonly>
+    </div>
+
+    <div class="form-group">
+        <label>📅 Data para Agendamento:</label>
+        <input type="date" id="dataAgenda" required>
+    </div>
+
+    <button onclick="salvarAgendamento()" id="btnSalvar">Confirmar Agendamento</button>
+    <p id="msg"></p>
+</div>
+
+<script>
+    // --- IMPORTANTE: COLOQUE SUA URL AQUI ---
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxN2Q9yAarhZNyoSMKWXk6330UMOmjYHFatE5nCqubfPHvcbcbiapk2EJ3bYXMsMJJX/exec'; 
+
+    let pacientes = [];
+    const inputBusca = document.getElementById('buscaPaciente');
+    const statusBusca = document.getElementById('status-busca');
+    const datalist = document.getElementById('listaPacientes');
+
+    // 1. Carrega lista ao abrir a página
+    window.onload = () => {
+        fetch(scriptURL + "?action=lista_completa")
+            .then(r => r.json())
+            .then(data => {
+                pacientes = data;
+                inputBusca.disabled = false;
+                inputBusca.placeholder = "Digite Nome ou CPF...";
+                statusBusca.innerText = "Sistema pronto. Digite para buscar.";
+                statusBusca.style.color = "green";
+                
+                data.forEach(p => {
+                    let opt = document.createElement('option');
+                    // Valor único para busca: "JOAO SILVA | CPF: 123..."
+                    opt.value = `${p.nome} | CPF: ${p.cpf}`;
+                    datalist.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                statusBusca.innerText = "Erro ao carregar lista de pacientes. Verifique a internet.";
+                statusBusca.style.color = "red";
+            });
+    };
+
+    // 2. Quando seleciona um paciente na lista
+    inputBusca.addEventListener('input', function() {
+        let val = this.value;
+        // Procura na memória o paciente que bate com o texto selecionado
+        let p = pacientes.find(x => `${x.nome} | CPF: ${x.cpf}` === val);
+        
+        if(p) {
+            document.getElementById('nomeFinal').value = p.nome;
+            document.getElementById('cpfFinal').value = p.cpf;
+            // Limpa mensagem de erro anterior se houver
+            document.getElementById('msg').innerText = ""; 
+        } else {
+            // Se apagou, limpa os campos
+            document.getElementById('nomeFinal').value = "";
+            document.getElementById('cpfFinal').value = "";
+        }
+    });
+
+    // 3. Enviar para a Planilha (Aba Atendimentos)
+    function salvarAgendamento() {
+        let nome = document.getElementById('nomeFinal').value;
+        let cpf = document.getElementById('cpfFinal').value;
+        let data = document.getElementById('dataAgenda').value;
+        let btn = document.getElementById('btnSalvar');
+        let msg = document.getElementById('msg');
+
+        if(!nome) { 
+            alert("Por favor, selecione um paciente da lista."); 
+            return; 
+        }
+        if(!data) { 
+            alert("Por favor, selecione uma data."); 
+            return; 
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Salvando...";
+        msg.innerText = "";
+
+        let formData = new FormData();
+        formData.append('action', 'agendar'); // Avisa o script que é um agendamento novo
+        formData.append('nome', nome);
+        formData.append('cpf', cpf);
+        formData.append('data_agendamento', data);
+
+        fetch(scriptURL, { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(res => {
+                if(res.result === 'success') {
+                    msg.innerText = "✅ Agendado com sucesso!";
+                    msg.style.color = "green";
+                    
+                    // Limpa o formulário e recarrega após 2 segundos
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    msg.innerText = "❌ Erro ao salvar: " + res.error;
+                    msg.style.color = "red";
+                    btn.disabled = false;
+                    btn.innerText = "Confirmar Agendamento";
+                }
+            })
+            .catch(err => {
+                msg.innerText = "Erro de conexão.";
+                btn.disabled = false;
+                btn.innerText = "Confirmar Agendamento";
+            });
+    }
+</script>
+
 </body>
 </html>
