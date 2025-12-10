@@ -45,11 +45,6 @@
         </div>
 
         <div class="form-group">
-            <label style="color: #0056b3;">📅 Data Agendada (Marcação):</label>
-            <input type="text" id="dataAgendadaRececao" readonly style="background-color: #e3f2fd; border-color: #0056b3;">
-        </div>
-
-        <div class="form-group">
             <label>Nome do Paciente:</label>
             <input type="text" name="Nome Paciente" id="nomePaciente" readonly>
         </div>
@@ -68,6 +63,11 @@
         <div class="form-group" style="margin-top: 15px;">
             <label>CPF:</label>
             <input type="text" id="cpfPaciente" readonly>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label style="color: #0056b3;">📅 Data Agendada pela Marcação:</label>
+            <input type="text" id="dataAgendadaRececao" readonly style="background-color: #e3f2fd; border-color: #0056b3; font-size: 1.1em; color: #0056b3;">
         </div>
 
         <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ccc;">
@@ -138,9 +138,8 @@
     const inputBusca = document.getElementById('inputBusca');
     const datalist = document.getElementById('listaPacientes');
 
-    // 1. CARREGAR FILA DE ESPERA (com dados cruzados)
+    // 1. CARREGAR FILA DE ESPERA
     window.onload = function() {
-        // Chama action 'lista_espera' que traz Agendamento + Cadastro
         fetch(scriptURL + "?action=lista_espera")
             .then(r => r.json())
             .then(data => {
@@ -153,7 +152,6 @@
                     inputBusca.placeholder = "Digite Nome ou CPF...";
                     data.forEach(p => {
                         const opt = document.createElement('option');
-                        // Exibe: NOME | DATA: 10/12/2025
                         opt.value = `${p.nome} | DATA: ${formatarData(p.data_agenda)}`;
                         datalist.appendChild(opt);
                     });
@@ -168,7 +166,6 @@
     function formatarData(dataISO) {
         if(!dataISO) return "-";
         try {
-            // Tenta formatar se vier yyyy-mm-dd
             let d = new Date(dataISO);
             d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
             return d.toLocaleDateString('pt-BR');
@@ -181,11 +178,11 @@
         const p = filaEspera.find(x => `${x.nome} | DATA: ${formatarData(x.data_agenda)}` === val);
 
         if (p) {
-            document.getElementById('idAgendamento').value = p.id; // Fundamental para atualizar
+            document.getElementById('idAgendamento').value = p.id;
             document.getElementById('nomePaciente').value = p.nome;
             document.getElementById('cpfPaciente').value = p.cpf;
             
-            // PREENCHE A DATA QUE VEIO DA MARCAÇÃO
+            // CAMPO: Data Agendada pela Marcação
             document.getElementById('dataAgendadaRececao').value = formatarData(p.data_agenda);
             
             document.getElementById('maePaciente').value = p.mae || "Não informado";
@@ -223,13 +220,11 @@
     document.getElementById('formAtendimento').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // Verifica se selecionou alguém
         if(!document.getElementById('idAgendamento').value) {
             alert("Selecione um paciente da lista primeiro!");
             return;
         }
 
-        // Trata motivo
         const sel = document.getElementById('selectMotivo');
         if(sel.value === 'Outros') {
             document.getElementById('motivoFinal').value = document.getElementById('inputOutroMotivo').value;
