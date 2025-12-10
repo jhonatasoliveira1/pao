@@ -6,7 +6,7 @@
     <title>Ficha de Atendimento - Além do Olhar</title>
     <style>
         :root {
-            --primary-color: #28a745; /* Verde para diferenciar do cadastro (Azul) */
+            --primary-color: #28a745;
             --bg-color: #f4f7f6;
             --text-color: #333;
             --error-color: #dc3545;
@@ -30,7 +30,7 @@
         }
         h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
         
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; position: relative; }
         label { display: block; margin-bottom: 8px; font-weight: 600; }
         
         input, select, textarea {
@@ -41,46 +41,21 @@
             font-size: 16px;
             box-sizing: border-box;
         }
+        input:focus, select:focus { border-color: var(--primary-color); outline: none; }
+        input[readonly] { background-color: #e9ecef; color: #555; }
+
+        /* Estilo da Busca de Paciente */
+        #status-busca { font-size: 0.85em; color: #666; margin-top: 5px; font-style: italic; }
         
-        /* Botões de Sim/Não (Radio Personalizado) */
-        .radio-group {
-            display: flex;
-            gap: 20px;
-        }
-        .radio-option {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        .radio-option input {
-            width: auto;
-            margin-right: 10px;
-            transform: scale(1.5);
-        }
+        /* Botões de Sim/Não */
+        .radio-group { display: flex; gap: 20px; }
+        .radio-option { display: flex; align-items: center; cursor: pointer; }
+        .radio-option input { width: auto; margin-right: 10px; transform: scale(1.5); }
 
         /* Área de Datas Múltiplas */
-        .date-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .btn-add {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-        .btn-remove {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 0 15px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
+        .date-container { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-add { background-color: #6c757d; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
+        .btn-remove { background-color: #dc3545; color: white; border: none; padding: 0 15px; cursor: pointer; border-radius: 4px; }
 
         /* Áreas Condicionais */
         #areaAtendimento, #areaFalta, #divOutroMotivo {
@@ -94,17 +69,8 @@
         #areaFalta { border-left-color: #dc3545; }
 
         /* Estilo especial para 20/X */
-        .acuidade-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .prefixo-20 {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #555;
-            white-space: nowrap;
-        }
+        .acuidade-wrapper { display: flex; align-items: center; gap: 10px; }
+        .prefixo-20 { font-size: 1.2em; font-weight: bold; color: #555; white-space: nowrap; }
 
         .btn-submit {
             display: block;
@@ -119,6 +85,7 @@
             margin-top: 30px;
         }
         .btn-submit:hover { background-color: #218838; }
+        .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
 
         #loading { display: none; text-align: center; margin-top: 15px; color: var(--primary-color); font-weight: bold; }
         #success-message { display: none; text-align: center; color: green; padding: 20px; border: 1px solid green; background: #e8f5e9; border-radius: 4px; margin-bottom: 20px;}
@@ -140,14 +107,32 @@
 
         <h1>FICHA DE ATENDIMENTO</h1>
 
-        <div class="form-group">
-            <label>Atendido por:</label>
-            <input type="text" name="Atendido Por" required placeholder="Nome do profissional">
+        <div class="form-group" style="background: #eef5f9; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">
+            <label>Buscar Paciente (Digite Nome ou CPF):</label>
+            <input type="text" list="listaPacientes" id="inputBusca" placeholder="Aguarde carregar lista..." disabled autocomplete="off">
+            <span id="status-busca">Carregando lista de pacientes...</span>
+            <datalist id="listaPacientes"></datalist>
         </div>
 
         <div class="form-group">
             <label>Nome do Paciente:</label>
-            <input type="text" name="Nome Paciente" required>
+            <input type="text" name="Nome Paciente" id="nomePaciente" readonly required>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label>CPF:</label>
+                <input type="text" name="CPF Paciente" id="cpfPaciente" readonly>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Data de Nascimento:</label>
+                <input type="text" name="Data Nascimento" id="nascPaciente" readonly>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Atendido por:</label>
+            <input type="text" name="Atendido Por" required placeholder="Nome do profissional">
         </div>
 
         <div class="form-group">
@@ -161,18 +146,6 @@
         </div>
 
         <div class="form-group">
-            <label>Inclusão no projeto?</label>
-            <div class="radio-group">
-                <label class="radio-option">
-                    <input type="radio" name="Inclusão Projeto" value="Sim" required> Sim
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="Inclusão Projeto" value="Não"> Não
-                </label>
-            </div>
-        </div>
-
-        <div class="form-group">
             <label>Paciente Compareceu?</label>
             <div class="radio-group">
                 <label class="radio-option">
@@ -180,6 +153,18 @@
                 </label>
                 <label class="radio-option">
                     <input type="radio" name="Compareceu" value="Não" onclick="toggleComparecimento(false)"> Não
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Inclusão no projeto?</label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="Inclusão Projeto" value="Sim"> Sim
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="Inclusão Projeto" value="Não"> Não
                 </label>
             </div>
         </div>
@@ -250,12 +235,66 @@
 
 <script>
     // --- COLE SUA URL DO APPS SCRIPT AQUI ---
-    const scriptURL = 'COLE_AQUI_SUA_NOVA_URL_DO_GOOGLE_APPS_SCRIPT'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwZcmdDIlIAI0Miym0P6-5eg1fwa4hP-pfPG5djVmKC1eveEXra9_oZm32SAa-AMZTh/exec'; 
+
+    // --- VARIÁVEIS GLOBAIS ---
+    let pacientesData = []; // Guardará a lista baixada da planilha
 
     const form = document.getElementById('formAtendimento');
     const loading = document.getElementById('loading');
     const btn = document.querySelector('.btn-submit');
     const successMsg = document.getElementById('success-message');
+    const inputBusca = document.getElementById('inputBusca');
+    const statusBusca = document.getElementById('status-busca');
+    const datalist = document.getElementById('listaPacientes');
+
+    // 1. CARREGAR LISTA DE PACIENTES AO ABRIR (DO GET)
+    window.onload = function() {
+        fetch(scriptURL)
+            .then(response => response.json())
+            .then(data => {
+                pacientesData = data;
+                statusBusca.innerText = "Lista carregada. Digite para buscar.";
+                statusBusca.style.color = "green";
+                inputBusca.disabled = false;
+                inputBusca.placeholder = "Digite Nome ou CPF...";
+                
+                // Preenche o datalist
+                pacientesData.forEach(p => {
+                    const option = document.createElement('option');
+                    // O valor que aparece na lista
+                    option.value = `${p.nome} (CPF: ${p.cpf})`;
+                    datalist.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error(error);
+                statusBusca.innerText = "Erro ao carregar lista de pacientes.";
+                statusBusca.style.color = "red";
+            });
+    };
+
+    // 2. EVENTO DE SELEÇÃO NA BUSCA
+    inputBusca.addEventListener('input', function() {
+        const val = this.value;
+        // Tenta achar o paciente na lista baseada no texto inputado
+        // A lógica do datalist do HTML coloca o valor exato do option no input quando seleciona
+        
+        // Vamos procurar na nossa lista em memória
+        const pacienteEncontrado = pacientesData.find(p => `${p.nome} (CPF: ${p.cpf})` === val);
+
+        if (pacienteEncontrado) {
+            document.getElementById('nomePaciente').value = pacienteEncontrado.nome;
+            document.getElementById('cpfPaciente').value = pacienteEncontrado.cpf;
+            document.getElementById('nascPaciente').value = pacienteEncontrado.nascimento;
+        } else {
+            // Se apagou ou digitou algo novo, limpa (opcional, pode deixar travar)
+            // document.getElementById('nomePaciente').value = "";
+            // document.getElementById('cpfPaciente').value = "";
+            // document.getElementById('nascPaciente').value = "";
+        }
+    });
+
 
     // Lógica para Adicionar Múltiplas Datas
     function adicionarData() {
@@ -279,12 +318,10 @@
         if (compareceu) {
             areaSim.style.display = 'block';
             areaNao.style.display = 'none';
-            // Torna campos do 'Sim' obrigatórios se necessário (opcional)
-            selectNao.value = ""; // Limpa motivo
+            selectNao.value = ""; 
         } else {
             areaSim.style.display = 'none';
             areaNao.style.display = 'block';
-            // Limpa campos do 'Sim'
             camposSim.forEach(c => c.value = "");
         }
     }
