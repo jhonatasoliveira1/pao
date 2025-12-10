@@ -54,6 +54,7 @@
         .btn-green { background: #28a745; color: white; flex: 2; } 
         
         button:hover { opacity: 0.9; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.6; }
         
         .date-input-area { margin-top: 15px; display: none; animation: fadeIn 0.3s; }
         .date-input-area input { width: 100%; padding: 10px; font-size: 1.1em; border: 2px solid #28a745; border-radius: 4px; }
@@ -81,7 +82,7 @@
             </label>
         </div>
         <div class="patient-list" id="lista">
-            <div class="loader">Carregando lista de pacientes...</div>
+            <div class="loader" id="loader-msg">Carregando lista de pacientes...</div>
         </div>
     </div>
 
@@ -129,7 +130,7 @@
     </div>
 
     <script>
-        // --- COLOQUE SUA NOVA URL AQUI ---
+        // --- COLOQUE SUA NOVA URL DO GOOGLE APPS SCRIPT AQUI ---
         const scriptURL = 'https://script.google.com/macros/s/AKfycbw1A4esr5gRdSN0NowFzSOteUa-bs8Th8uJY1AcdQP8U2bHC_df_-Vu1rz0gVLGqEPi/exec';
         
         let pacientes = [];
@@ -140,18 +141,26 @@
             fetch(scriptURL + "?action=lista_marcacao")
                 .then(r => r.json())
                 .then(data => {
+                    document.getElementById('loader-msg').style.display = 'none';
+                    if(!data || data.length === 0) {
+                        document.getElementById('lista').innerHTML = "<p style='text-align:center'>Nenhum paciente encontrado.</p>";
+                        return;
+                    }
                     pacientes = data;
                     preencherFiltroEscolas(data);
                     renderizarLista(pacientes);
                 })
-                .catch(e => {
-                    document.getElementById('lista').innerHTML = "<p style='text-align:center; color:red;'>Erro ao carregar lista.<br>Verifique a URL do Script.</p>";
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('loader-msg').innerText = "Erro ao carregar lista. Verifique o Script.";
+                    document.getElementById('loader-msg').style.color = "red";
                 });
         };
 
-        // 2. Preencher Select de Escolas
+        // 2. Preencher Select de Escolas Automaticamente
         function preencherFiltroEscolas(data) {
             const select = document.getElementById('filter-school');
+            // Extrai escolas únicas e remove vazios
             const escolas = [...new Set(data.map(p => p.unidade).filter(u => u))].sort();
             
             escolas.forEach(escola => {
@@ -162,7 +171,7 @@
             });
         }
 
-        // 3. Renderizar Lista
+        // 3. Renderizar Lista (Com Filtros)
         function renderizarLista(lista) {
             const container = document.getElementById('lista');
             const termo = document.getElementById('search').value.toLowerCase();
@@ -172,11 +181,118 @@
             container.innerHTML = "";
 
             lista.forEach(p => {
+                // Filtros Lógicos
                 if (!p.nome.toLowerCase().includes(termo)) return;
                 if (!showScheduled && p.status === 'Agendado') return;
                 if (escolaFiltro && p.unidade !== escolaFiltro) return;
 
                 const card = document.createElement('div');
-                card.className = `card status-${(p.status || 'Novo').split(' ')[0]}`; // Usa primeira palavra para CSS
-                if(p.status && p.status.includes("Tentativa")) card.classList.add("status-Tentativa");
-                if(
+                // Define cor baseada no status (pega primeira palavra: Tentativa, Falha, Novo, Agendado)
+                let statusClass = (p.status || 'Novo').split(' ')[0];
+                if(statusClass.includes("Tentativa")) statusClass = "Tentativa"; // Garante match
+                
+                card.className = `card status-${statusClass}`;
+                if(p.status === 'Agendado') card.style.display = showScheduled ? 'block' : 'none';
+
+                // Ícone Visual
+                let icon = "⚪";
+                if(p.status && p.status.includes("Tentativa")) icon = "🟡";
+                if(p.status && p.status.includes("Falha")) icon = "🔴";
+                if(p.status === "Agendado") icon = "🟢";
+
+                card.innerHTML = `
+                    <span class="badge">${p.status || 'Novo'}</span>
+                    <span class="p-name">${p.nome}</span>
+                    <span class="p-school">🏫 ${p.unidade || 'Sem unidade'}</span>
+                    <span class="p-info">${icon} CPF: ${p.cpf}</span>
+                `;
+                
+                card.onclick = () => abrirDetalhes(p, card);
+                container.appendChild(card);
+            });
+            
+            if (container.innerHTML === "") {
+                container.innerHTML = "<p style='text-align:center; color:#999; margin-top:20px;'>Nenhum paciente encontrado com esses filtros.</p>";
+            }
+        }
+
+        // Eventos de Filtro
+        document.getElementById('search').addEventListener('input', () => renderizarLista(pacientes));
+        document.getElementById('show-scheduled').addEventListener('change', () => renderizarLista(pacientes));
+        document.getElementById('filter-school').addEventListener('change', () => renderizarLista(pacientes));
+
+        // 4. Abrir Detalhes
+        function abrirDetalhes(p, cardElement) {
+            pacienteAtual = p;
+            
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            cardElement.classList.add('active');
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('detalhes').style.display = 'block';
+            document.getElementById('area-data').style.display = 'none'; 
+
+            document.getElementById('d-nome').innerText = p.nome;
+            document.getElementById('d-unidade').innerText = p.unidade || "Não informada";
+            document.getElementById('d-status').innerText = p.status || "Novo";
+            document.getElementById('d-cpf').innerText = p.cpf;
+            document.getElementById('d-nasc').innerText = p.nasc;
+            document.getElementById('d-mae').innerText = p.mae;
+            document.getElementById('d-tel1').innerText = p.tel1;
+            document.getElementById('d-tel2').innerText = p.tel2;
+        }
+
+        // 5. Salvar Feedback (COM DATA AUTOMÁTICA)
+        function salvarFeedback(statusBase) {
+            // Pega a data de hoje no formato brasileiro
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            const statusComData = `${statusBase} - ${hoje}`;
+
+            if(!confirm(`Confirmar registro: ${statusComData}?`)) return;
+            
+            enviarDados(statusComData, null);
+        }
+
+        function mostrarAgendamento() {
+            document.getElementById('area-data').style.display = 'block';
+        }
+
+        function confirmarAgendamento() {
+            const data = document.getElementById('input-data-agenda').value;
+            if(!data) { alert("Escolha uma data!"); return; }
+            enviarDados("Agendado", data);
+        }
+
+        function enviarDados(statusNovo, dataAgenda) {
+            const btns = document.querySelectorAll('button');
+            btns.forEach(b => b.disabled = true);
+            document.body.style.cursor = "wait";
+
+            const formData = new FormData();
+            formData.append('action', 'salvar_marcacao');
+            formData.append('linha_planilha', pacienteAtual.linha);
+            formData.append('status_novo', statusNovo);
+            
+            if(dataAgenda) {
+                formData.append('nome', pacienteAtual.nome);
+                formData.append('cpf', pacienteAtual.cpf);
+                formData.append('data_agendamento', dataAgenda);
+            }
+
+            fetch(scriptURL, { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(res => {
+                    if(res.result === 'success') {
+                        alert("Salvo com sucesso!");
+                        location.reload();
+                    } else {
+                        alert("Erro ao salvar.");
+                        btns.forEach(b => b.disabled = false);
+                        document.body.style.cursor = "default";
+                    }
+                });
+        }
+    </script>
+
+</body>
+</html>
