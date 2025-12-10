@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico do Paciente - Além do Olhar</title>
+    <style>
+        :root {
+            --primary-color: #6610f2; /* Roxo para diferenciar (Histórico) */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --card-presente: #d4edda; /* Verde claro */
+            --border-presente: #28a745;
+            --card-ausente: #f8d7da; /* Vermelho claro */
+            --border-ausente: #dc3545;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary-color);
+        }
+        h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
+        
+        /* Área de Busca */
+        .search-box {
+            background: #eef5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+        }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Resumo do Paciente */
+        #paciente-info {
+            display: none;
+            background: #fff;
+            padding: 15px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .info-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
+        .info-item { flex: 1; }
+        .info-label { font-size: 0.85em; color: #666; text-transform: uppercase; }
+        .info-value { font-weight: bold; font-size: 1.1em; }
+
+        /* Lista de Histórico */
+        #historico-container { margin-top: 20px; }
+        
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .card.presente { border-left: 6px solid var(--border-presente); background-color: #f9fff9; }
+        .card.ausente { border-left: 6px solid var(--border-ausente); background-color: #fff9f9; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #ccc;
+        }
+        .card-date { font-weight: bold; color: #555; }
+        .card-status { font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 0.9em; }
+        .status-sim { background: var(--border-presente); color: white; }
+        .status-nao { background: var(--border-ausente); color: white; }
+
+        .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .full-width { grid-column: span 2; }
+        
+        .field-label { font-weight: 600; font-size: 0.9em; color: #555; }
+        .field-val { font-size: 1em; color: #000; }
+
+        .loading-text { text-align: center; color: #666; font-style: italic; margin-top: 20px; display: none;}
+        .empty-text { text-align: center; color: #999; margin-top: 30px; display: none;}
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>PRONTUÁRIO / HISTÓRICO</h1>
+
+    <div class="search-box">
+        <label>🔎 Buscar Paciente:</label>
+        <input type="text" list="listaPacientes" id="inputBusca" placeholder="Carregando banco de dados..." disabled autocomplete="off">
+        <datalist id="listaPacientes"></datalist>
+    </div>
+
+    <div id="paciente-info">
+        <div class="info-row">
+            <div class="info-item">
+                <div class="info-label">Nome Completo</div>
+                <div class="info-value" id="resNome">...</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Data de Nascimento</div>
+                <div class="info-value" id="resNasc">...</div>
+            </div>
+        </div>
+        <div class="info-row">
+            <div class="info-item">
+                <div class="info-label">Nome da Mãe</div>
+                <div class="info-value" id="resMae">...</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">CPF</div>
+                <div class="info-value" id="resCPF">...</div>
+            </div>
+        </div>
+    </div>
+
+    <h3 id="titulo-historico" style="display:none; border-bottom: 2px solid #eee; padding-bottom: 10px;">Histórico de Atendimentos</h3>
+    <p id="loading" class="loading-text">Buscando histórico na nuvem...</p>
+    <p id="empty" class="empty-text">Nenhum atendimento registrado para este paciente.</p>
+    
+    <div id="historico-container"></div>
+
+</div>
+
+<script>
+    // --- COLE SUA URL DO APPS SCRIPT AQUI ---
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwF7KsBeRMAO6YeNr24aWCKWg7gRIr498N9_vUPXkpoVFr0OgAuZvAiIlptMSLVOB66/exec'; 
+
+    let pacientesData = [];
+    const inputBusca = document.getElementById('inputBusca');
+    const datalist = document.getElementById('listaPacientes');
+    const divInfo = document.getElementById('paciente-info');
+    const containerHist = document.getElementById('historico-container');
+    const loading = document.getElementById('loading');
+    const empty = document.getElementById('empty');
+    const tituloHist = document.getElementById('titulo-historico');
+
+    // 1. Carregar Lista Inicial
+    window.onload = function() {
+        fetch(scriptURL)
+            .then(response => response.json())
+            .then(data => {
+                pacientesData = data;
+                inputBusca.disabled = false;
+                inputBusca.placeholder = "Digite Nome ou CPF para buscar...";
+                
+                pacientesData.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = `${p.nome} | CPF: ${p.cpf}`;
+                    datalist.appendChild(option);
+                });
+            });
+    };
+
+    // 2. Ao selecionar um paciente
+    inputBusca.addEventListener('input', function() {
+        const val = this.value;
+        const paciente = pacientesData.find(p => `${p.nome} | CPF: ${p.cpf}` === val);
+
+        if (paciente) {
+            // Preenche cabeçalho
+            document.getElementById('resNome').innerText = paciente.nome;
+            document.getElementById('resNasc').innerText = paciente.nascimento;
+            document.getElementById('resCPF').innerText = paciente.cpf;
+            document.getElementById('resMae').innerText = paciente.mae || "-";
+            
+            divInfo.style.display = 'block';
+            tituloHist.style.display = 'block';
+            
+            // Busca histórico
+            buscarHistorico(paciente.nome);
+        } else {
+            divInfo.style.display = 'none';
+            containerHist.innerHTML = '';
+            tituloHist.style.display = 'none';
+            empty.style.display = 'none';
+        }
+    });
+
+    function buscarHistorico(nomePaciente) {
+        containerHist.innerHTML = '';
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+
+        // Chama a API com action=getHistorico
+        fetch(`${scriptURL}?action=getHistorico&nome=${encodeURIComponent(nomePaciente)}`)
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (data.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                // Renderiza os cards
+                data.forEach(atendimento => {
+                    criarCard(atendimento);
+                });
+            })
+            .catch(err => {
+                loading.innerText = "Erro ao carregar histórico.";
+            });
+    }
+
+    function criarCard(d) {
+        const card = document.createElement('div');
+        const compareceu = d.compareceu === "Sim";
+        
+        card.className = `card ${compareceu ? 'presente' : 'ausente'}`;
+
+        let conteudoHTML = `
+            <div class="card-header">
+                <span class="card-date">📅 Agendado para: ${d.datasAgendamento}</span>
+                <span class="card-status ${compareceu ? 'status-sim' : 'status-nao'}">
+                    ${compareceu ? 'COMPARECEU' : 'FALTOU'}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="full-width">
+                    <div class="field-label">Profissional:</div>
+                    <div class="field-val">${d.profissional || '-'}</div>
+                </div>
+        `;
+
+        if (compareceu) {
+            conteudoHTML += `
+                <div class="full-width">
+                    <div class="field-label">Inclusão no Projeto:</div>
+                    <div class="field-val" style="font-weight:bold; color:${d.inclusao === 'Sim' ? 'green' : 'red'}">${d.inclusao}</div>
+                </div>
+                <div>
+                    <div class="field-label">Situação:</div>
+                    <div class="field-val">${d.situacao || '-'}</div>
+                </div>
+                <div>
+                    <div class="field-label">HD:</div>
+                    <div class="field-val">${d.hd || '-'}</div>
+                </div>
+                <div>
+                    <div class="field-label">Acuidade Visual:</div>
+                    <div class="field-val"><strong>${d.avl || '-'}</strong></div>
+                </div>
+                <div>
+                    <div class="field-label">OD / OE:</div>
+                    <div class="field-val">20/${d.od || '?'}  -  20/${d.oe || '?'}</div>
+                </div>
+            `;
+        } else {
+            conteudoHTML += `
+                <div class="full-width">
+                    <div class="field-label">Motivo da Falta:</div>
+                    <div class="field-val" style="color:red;">${d.motivo}</div>
+                </div>
+            `;
+        }
+
+        conteudoHTML += `</div>`; // fecha card-body
+        card.innerHTML = conteudoHTML;
+        containerHist.appendChild(card);
+    }
+</script>
+
+</body>
+</html>
