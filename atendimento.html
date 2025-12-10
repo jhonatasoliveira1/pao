@@ -42,17 +42,21 @@
             box-sizing: border-box;
         }
         input:focus, select:focus { border-color: var(--primary-color); outline: none; }
-        input[readonly] { background-color: #e9ecef; color: #555; }
+        input[readonly] { background-color: #e9ecef; color: #555; font-weight: 500; }
 
-        /* Estilo da Busca de Paciente */
+        /* Estilo da Busca */
         #status-busca { font-size: 0.85em; color: #666; margin-top: 5px; font-style: italic; }
         
+        /* Layout Flexível */
+        .flex-row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .flex-col { flex: 1; min-width: 200px; }
+
         /* Botões de Sim/Não */
         .radio-group { display: flex; gap: 20px; }
         .radio-option { display: flex; align-items: center; cursor: pointer; }
         .radio-option input { width: auto; margin-right: 10px; transform: scale(1.5); }
 
-        /* Área de Datas Múltiplas */
+        /* Datas Múltiplas */
         .date-container { display: flex; gap: 10px; margin-bottom: 10px; }
         .btn-add { background-color: #6c757d; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
         .btn-remove { background-color: #dc3545; color: white; border: none; padding: 0 15px; cursor: pointer; border-radius: 4px; }
@@ -96,7 +100,7 @@
 
 <div class="container">
     <div id="success-message">
-        <h3>Dados Salvos!</h3>
+        <h3>Atendimento Salvo com Sucesso!</h3>
         <button onclick="location.reload()" style="margin-top:10px; padding:10px; cursor:pointer;">Novo Atendimento</button>
     </div>
 
@@ -108,9 +112,9 @@
         <h1>FICHA DE ATENDIMENTO</h1>
 
         <div class="form-group" style="background: #eef5f9; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">
-            <label>Buscar Paciente (Digite Nome ou CPF):</label>
-            <input type="text" list="listaPacientes" id="inputBusca" placeholder="Aguarde carregar lista..." disabled autocomplete="off">
-            <span id="status-busca">Carregando lista de pacientes...</span>
+            <label>🔎 Buscar Paciente (Digite CPF ou Nome):</label>
+            <input type="text" list="listaPacientes" id="inputBusca" placeholder="Carregando banco de dados..." disabled autocomplete="off">
+            <span id="status-busca">Aguarde...</span>
             <datalist id="listaPacientes"></datalist>
         </div>
 
@@ -119,16 +123,23 @@
             <input type="text" name="Nome Paciente" id="nomePaciente" readonly required>
         </div>
 
-        <div style="display: flex; gap: 15px;">
-            <div class="form-group" style="flex: 1;">
-                <label>CPF:</label>
-                <input type="text" name="CPF Paciente" id="cpfPaciente" readonly>
+        <div class="flex-row">
+            <div class="flex-col" style="flex: 2;">
+                <label>Nome da Mãe:</label>
+                <input type="text" id="maePaciente" readonly>
             </div>
-            <div class="form-group" style="flex: 1;">
+            <div class="flex-col">
                 <label>Data de Nascimento:</label>
                 <input type="text" name="Data Nascimento" id="nascPaciente" readonly>
             </div>
         </div>
+
+        <div class="form-group" style="margin-top: 20px;">
+            <label>CPF:</label>
+            <input type="text" name="CPF Paciente" id="cpfPaciente" readonly>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
 
         <div class="form-group">
             <label>Atendido por:</label>
@@ -191,15 +202,15 @@
                 </select>
             </div>
 
-            <div style="display: flex; gap: 20px;">
-                <div class="form-group" style="flex: 1;">
+            <div class="flex-row">
+                <div class="flex-col">
                     <label>OD (Olho Direito):</label>
                     <div class="acuidade-wrapper">
                         <span class="prefixo-20">20 /</span>
                         <input type="number" name="OD" placeholder="Ex: 20">
                     </div>
                 </div>
-                <div class="form-group" style="flex: 1;">
+                <div class="flex-col">
                     <label>OE (Olho Esquerdo):</label>
                     <div class="acuidade-wrapper">
                         <span class="prefixo-20">20 /</span>
@@ -237,8 +248,7 @@
     // --- COLE SUA URL DO APPS SCRIPT AQUI ---
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwZcmdDIlIAI0Miym0P6-5eg1fwa4hP-pfPG5djVmKC1eveEXra9_oZm32SAa-AMZTh/exec'; 
 
-    // --- VARIÁVEIS GLOBAIS ---
-    let pacientesData = []; // Guardará a lista baixada da planilha
+    let pacientesData = [];
 
     const form = document.getElementById('formAtendimento');
     const loading = document.getElementById('loading');
@@ -248,55 +258,45 @@
     const statusBusca = document.getElementById('status-busca');
     const datalist = document.getElementById('listaPacientes');
 
-    // 1. CARREGAR LISTA DE PACIENTES AO ABRIR (DO GET)
+    // 1. CARREGAR LISTA
     window.onload = function() {
         fetch(scriptURL)
             .then(response => response.json())
             .then(data => {
                 pacientesData = data;
-                statusBusca.innerText = "Lista carregada. Digite para buscar.";
+                statusBusca.innerText = "Pronto. Digite CPF ou Nome.";
                 statusBusca.style.color = "green";
                 inputBusca.disabled = false;
-                inputBusca.placeholder = "Digite Nome ou CPF...";
+                inputBusca.placeholder = "Buscar paciente...";
                 
-                // Preenche o datalist
                 pacientesData.forEach(p => {
                     const option = document.createElement('option');
-                    // O valor que aparece na lista
-                    option.value = `${p.nome} (CPF: ${p.cpf})`;
+                    // Valor único para busca
+                    option.value = `${p.nome} | CPF: ${p.cpf}`;
                     datalist.appendChild(option);
                 });
             })
             .catch(error => {
                 console.error(error);
-                statusBusca.innerText = "Erro ao carregar lista de pacientes.";
+                statusBusca.innerText = "Erro na conexão com a planilha.";
                 statusBusca.style.color = "red";
             });
     };
 
-    // 2. EVENTO DE SELEÇÃO NA BUSCA
+    // 2. BUSCA INTELIGENTE
     inputBusca.addEventListener('input', function() {
         const val = this.value;
-        // Tenta achar o paciente na lista baseada no texto inputado
-        // A lógica do datalist do HTML coloca o valor exato do option no input quando seleciona
-        
-        // Vamos procurar na nossa lista em memória
-        const pacienteEncontrado = pacientesData.find(p => `${p.nome} (CPF: ${p.cpf})` === val);
+        const pacienteEncontrado = pacientesData.find(p => `${p.nome} | CPF: ${p.cpf}` === val);
 
         if (pacienteEncontrado) {
             document.getElementById('nomePaciente').value = pacienteEncontrado.nome;
             document.getElementById('cpfPaciente').value = pacienteEncontrado.cpf;
-            document.getElementById('nascPaciente').value = pacienteEncontrado.nascimento;
-        } else {
-            // Se apagou ou digitou algo novo, limpa (opcional, pode deixar travar)
-            // document.getElementById('nomePaciente').value = "";
-            // document.getElementById('cpfPaciente').value = "";
-            // document.getElementById('nascPaciente').value = "";
+            document.getElementById('nascPaciente').value = pacienteEncontrado.nascimento; // Data Formatada
+            document.getElementById('maePaciente').value = pacienteEncontrado.mae || "Não informado";
         }
     });
 
-
-    // Lógica para Adicionar Múltiplas Datas
+    // Adicionar Datas
     function adicionarData() {
         const container = document.getElementById('listaDatas');
         const div = document.createElement('div');
@@ -308,11 +308,10 @@
         container.appendChild(div);
     }
 
-    // Lógica Compareceu (Sim/Não)
+    // Toggle Compareceu
     function toggleComparecimento(compareceu) {
         const areaSim = document.getElementById('areaAtendimento');
         const areaNao = document.getElementById('areaFalta');
-        const camposSim = areaSim.querySelectorAll('input, select');
         const selectNao = document.getElementById('selectMotivo');
 
         if (compareceu) {
@@ -322,11 +321,10 @@
         } else {
             areaSim.style.display = 'none';
             areaNao.style.display = 'block';
-            camposSim.forEach(c => c.value = "");
         }
     }
 
-    // Lógica "Outros" no Motivo
+    // Outros Motivos
     const selectMotivo = document.getElementById('selectMotivo');
     const divOutroMotivo = document.getElementById('divOutroMotivo');
     
@@ -339,16 +337,16 @@
         }
     });
 
-    // Envio do Formulário
+    // Enviar
     form.addEventListener('submit', e => {
         e.preventDefault();
 
-        // 1. Juntar Datas
+        // Juntar Datas
         const inputsDatas = document.querySelectorAll('.input-data');
         const listaDatas = Array.from(inputsDatas).map(input => input.value).filter(val => val);
         document.getElementById('datasFinal').value = listaDatas.join('; ');
 
-        // 2. Definir Motivo Final
+        // Motivo
         if (selectMotivo.value === 'Outros') {
             document.getElementById('motivoFinal').value = document.getElementById('inputOutroMotivo').value;
         } else {
