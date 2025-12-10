@@ -9,17 +9,50 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--primary-color); }
         h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
+        
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Estilos de Input Padrão */
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        input:focus, select:focus { border-color: var(--primary-color); outline: none; }
         input[readonly] { background-color: #e9ecef; font-weight: bold; color: #444; }
+        
         .flex-row { display: flex; gap: 15px; flex-wrap: wrap; }
         .flex-col { flex: 1; min-width: 200px; }
+        
+        /* Áreas Condicionais */
         #areaAtendimento, #areaFalta, #divOutroMotivo { display: none; padding: 20px; background-color: #f8f9fa; border-left: 4px solid var(--primary-color); margin-top: 15px; }
         #areaFalta { border-left-color: #dc3545; }
+        
         .radio-group { display: flex; gap: 20px; }
         .radio-option { display: flex; align-items: center; cursor: pointer; }
         .radio-option input { margin-right: 10px; transform: scale(1.5); }
+        
+        /* ESTILO ESPECIAL PARA OD/OE (Input Integrado) */
+        .input-group-visual {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding-left: 10px;
+        }
+        .input-group-visual:focus-within {
+            border-color: var(--primary-color);
+        }
+        .prefixo-visual {
+            font-weight: bold;
+            color: #555;
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        .input-sem-borda {
+            border: none !important;
+            outline: none !important;
+            padding-left: 0 !important;
+        }
+
         .btn-submit { width: 100%; padding: 15px; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; font-size: 18px; cursor: pointer; margin-top: 20px; }
         .btn-submit:hover { background-color: #218838; }
         .btn-submit:disabled { background-color: #ccc; }
@@ -94,12 +127,24 @@
             </div>
             <div class="form-group"><label>Situação:</label><input type="text" name="Situação"></div>
             <div class="form-group"><label>HD:</label><input type="text" name="HD"></div>
+            
             <div class="form-group"><label>AVL:</label>
                 <select name="AVL"><option value="">Selecione...</option><option value="C/C">C/C</option><option value="S/C">S/C</option></select>
             </div>
+
             <div class="flex-row">
-                <div class="flex-col"><label>OD:</label><input type="text" name="OD" placeholder="20/..."></div>
-                <div class="flex-col"><label>OE:</label><input type="text" name="OE" placeholder="20/..."></div>
+                <div class="flex-col">
+                    <div class="input-group-visual">
+                        <span class="prefixo-visual">OD 20/</span>
+                        <input type="number" name="OD" class="input-sem-borda" placeholder="Digite...">
+                    </div>
+                </div>
+                <div class="flex-col">
+                    <div class="input-group-visual">
+                        <span class="prefixo-visual">OE 20/</span>
+                        <input type="number" name="OE" class="input-sem-borda" placeholder="Digite...">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -154,8 +199,7 @@
                     inputBusca.placeholder = "Digite Nome ou CPF...";
                     data.forEach(p => {
                         const opt = document.createElement('option');
-                        // Exibe: NOME | CPF
-                        opt.value = `${p.nome} | CPF: ${p.cpf}`;
+                        opt.value = `${p.nome} | DATA: ${formatarData(p.data_agenda)}`;
                         datalist.appendChild(opt);
                     });
                 }
@@ -178,26 +222,22 @@
         return data;
     }
 
-    // 2. PREENCHER DADOS AO SELECIONAR
+    // 2. PREENCHER DADOS
     inputBusca.addEventListener('input', function() {
         const val = this.value;
-        // Busca na lista usando a chave NOME | CPF
-        const p = filaEspera.find(x => `${x.nome} | CPF: ${x.cpf}` === val);
+        const p = filaEspera.find(x => `${x.nome} | DATA: ${formatarData(x.data_agenda)}` === val);
 
         if (p) {
             document.getElementById('idAgendamento').value = p.id;
             document.getElementById('nomePaciente').value = p.nome;
             document.getElementById('cpfPaciente').value = p.cpf;
-            
-            // PREENCHE A DATA QUE VEIO DA MARCAÇÃO
             document.getElementById('dataAgendadaRececao').value = formatarData(p.data_agenda);
-            
             document.getElementById('maePaciente').value = p.mae || "Não informado";
             document.getElementById('nascPaciente').value = formatarData(p.nasc) || "-";
         }
     });
 
-    // Lógicas visuais (Sim/Não)
+    // Lógicas visuais
     function toggleComparecimento(val) {
         const areaSim = document.getElementById('areaAtendimento');
         const areaNao = document.getElementById('areaFalta');
