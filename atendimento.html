@@ -45,7 +45,7 @@
         </div>
 
         <div class="form-group">
-            <label style="color: #0056b3;">📅 Data Agendada (Recepção):</label>
+            <label style="color: #0056b3;">📅 Data Agendada (Marcação):</label>
             <input type="text" id="dataAgendadaRececao" readonly style="background-color: #e3f2fd; border-color: #0056b3;">
         </div>
 
@@ -131,7 +131,7 @@
 </div>
 
 <script>
-    // --- INSIRA SUA NOVA URL AQUI ---
+    // --- INSIRA SUA URL AQUI ---
     const scriptURL = 'https://script.google.com/macros/s/AKfycbzoTrQPSYoVYdpD34xEWkMOMcxvdm1wG54NTeTF8d5XQKJqExXVJnlgfeGKqpVLP5MH/exec'; 
 
     let filaEspera = [];
@@ -170,7 +170,6 @@
         try {
             // Tenta formatar se vier yyyy-mm-dd
             let d = new Date(dataISO);
-            // Ajuste simples de fuso horário visual
             d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
             return d.toLocaleDateString('pt-BR');
         } catch(e) { return dataISO; }
@@ -186,7 +185,7 @@
             document.getElementById('nomePaciente').value = p.nome;
             document.getElementById('cpfPaciente').value = p.cpf;
             
-            // PREENCHE A DATA QUE VEIO DA RECEPÇÃO
+            // PREENCHE A DATA QUE VEIO DA MARCAÇÃO
             document.getElementById('dataAgendadaRececao').value = formatarData(p.data_agenda);
             
             document.getElementById('maePaciente').value = p.mae || "Não informado";
