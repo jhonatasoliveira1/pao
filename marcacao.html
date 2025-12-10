@@ -129,8 +129,8 @@
     </div>
 
     <script>
-        // --- COLOQUE SUA URL AQUI ---
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxzGg7Ipn-ynuqUymITdjQ1ch97d37Db8hkQqsyL_3Pp5JGZ3SzpZM93oCqPO0LnkKs/exec';
+        // --- COLOQUE SUA NOVA URL AQUI ---
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw1A4esr5gRdSN0NowFzSOteUa-bs8Th8uJY1AcdQP8U2bHC_df_-Vu1rz0gVLGqEPi/exec';
         
         let pacientes = [];
         let pacienteAtual = null;
@@ -143,6 +143,9 @@
                     pacientes = data;
                     preencherFiltroEscolas(data);
                     renderizarLista(pacientes);
+                })
+                .catch(e => {
+                    document.getElementById('lista').innerHTML = "<p style='text-align:center; color:red;'>Erro ao carregar lista.<br>Verifique a URL do Script.</p>";
                 });
         };
 
@@ -174,107 +177,6 @@
                 if (escolaFiltro && p.unidade !== escolaFiltro) return;
 
                 const card = document.createElement('div');
-                card.className = `card status-${(p.status || 'Novo').split(' ')[0]}`;
+                card.className = `card status-${(p.status || 'Novo').split(' ')[0]}`; // Usa primeira palavra para CSS
                 if(p.status && p.status.includes("Tentativa")) card.classList.add("status-Tentativa");
-                if(p.status && p.status.includes("Falha")) card.classList.add("status-Falha");
-                
-                let icon = "⚪";
-                if(p.status && p.status.includes("Tentativa")) icon = "🟡";
-                if(p.status && p.status.includes("Falha")) icon = "🔴";
-                if(p.status === "Agendado") icon = "🟢";
-
-                card.innerHTML = `
-                    <span class="badge">${p.status || 'Novo'}</span>
-                    <span class="p-name">${p.nome}</span>
-                    <span class="p-school">🏫 ${p.unidade || 'Sem unidade'}</span>
-                    <span class="p-info">${icon} CPF: ${p.cpf}</span>
-                `;
-                
-                card.onclick = () => abrirDetalhes(p, card);
-                container.appendChild(card);
-            });
-            
-            if (container.innerHTML === "") {
-                container.innerHTML = "<p style='text-align:center; color:#999; margin-top:20px;'>Nenhum paciente encontrado com esses filtros.</p>";
-            }
-        }
-
-        document.getElementById('search').addEventListener('input', () => renderizarLista(pacientes));
-        document.getElementById('show-scheduled').addEventListener('change', () => renderizarLista(pacientes));
-        document.getElementById('filter-school').addEventListener('change', () => renderizarLista(pacientes));
-
-        // 4. Abrir Detalhes
-        function abrirDetalhes(p, cardElement) {
-            pacienteAtual = p;
-            
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-            cardElement.classList.add('active');
-
-            document.getElementById('empty-state').style.display = 'none';
-            document.getElementById('detalhes').style.display = 'block';
-            document.getElementById('area-data').style.display = 'none'; 
-
-            document.getElementById('d-nome').innerText = p.nome;
-            document.getElementById('d-unidade').innerText = p.unidade || "Não informada";
-            document.getElementById('d-status').innerText = p.status || "Novo";
-            document.getElementById('d-cpf').innerText = p.cpf;
-            document.getElementById('d-nasc').innerText = p.nasc;
-            document.getElementById('d-mae').innerText = p.mae;
-            document.getElementById('d-tel1').innerText = p.tel1;
-            document.getElementById('d-tel2').innerText = p.tel2;
-        }
-
-        // 5. Salvar Feedback (COM DATA AUTOMÁTICA)
-        function salvarFeedback(statusBase) {
-            // Pega a data de hoje no formato brasileiro
-            const hoje = new Date().toLocaleDateString('pt-BR');
-            const statusComData = `${statusBase} - ${hoje}`;
-
-            if(!confirm(`Confirmar registro: ${statusComData}?`)) return;
-            
-            enviarDados(statusComData, null);
-        }
-
-        function mostrarAgendamento() {
-            document.getElementById('area-data').style.display = 'block';
-        }
-
-        function confirmarAgendamento() {
-            const data = document.getElementById('input-data-agenda').value;
-            if(!data) { alert("Escolha uma data!"); return; }
-            enviarDados("Agendado", data);
-        }
-
-        function enviarDados(statusNovo, dataAgenda) {
-            const btns = document.querySelectorAll('button');
-            btns.forEach(b => b.disabled = true);
-            document.body.style.cursor = "wait";
-
-            const formData = new FormData();
-            formData.append('action', 'salvar_marcacao');
-            formData.append('linha_planilha', pacienteAtual.linha);
-            formData.append('status_novo', statusNovo);
-            
-            if(dataAgenda) {
-                formData.append('nome', pacienteAtual.nome);
-                formData.append('cpf', pacienteAtual.cpf);
-                formData.append('data_agendamento', dataAgenda);
-            }
-
-            fetch(scriptURL, { method: 'POST', body: formData })
-                .then(r => r.json())
-                .then(res => {
-                    if(res.result === 'success') {
-                        alert("Salvo com sucesso!");
-                        location.reload();
-                    } else {
-                        alert("Erro ao salvar.");
-                        btns.forEach(b => b.disabled = false);
-                        document.body.style.cursor = "default";
-                    }
-                });
-        }
-    </script>
-
-</body>
-</html>
+                if(
