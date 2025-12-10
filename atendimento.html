@@ -5,151 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ficha de Atendimento - Além do Olhar</title>
     <style>
-        :root {
-            --primary-color: #28a745;
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --error-color: #dc3545;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-top: 5px solid var(--primary-color);
-        }
+        :root { --primary-color: #28a745; --bg-color: #f4f7f6; --text-color: #333; --error-color: #dc3545; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--primary-color); }
         h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
-        
-        .form-group { margin-bottom: 20px; position: relative; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        input:focus, select:focus { border-color: var(--primary-color); outline: none; }
-        input[readonly] { background-color: #e9ecef; color: #333; font-weight: bold; }
-
-        /* Estilo da Busca */
-        #status-busca { font-size: 0.85em; color: #666; margin-top: 5px; font-style: italic; }
-        
-        /* Layout Flexível */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        input[readonly] { background-color: #e9ecef; font-weight: bold; color: #444; }
         .flex-row { display: flex; gap: 15px; flex-wrap: wrap; }
         .flex-col { flex: 1; min-width: 200px; }
-
-        /* Botões de Sim/Não */
+        #areaAtendimento, #areaFalta, #divOutroMotivo { display: none; padding: 20px; background-color: #f8f9fa; border-left: 4px solid var(--primary-color); margin-top: 15px; }
+        #areaFalta { border-left-color: #dc3545; }
         .radio-group { display: flex; gap: 20px; }
         .radio-option { display: flex; align-items: center; cursor: pointer; }
-        .radio-option input { width: auto; margin-right: 10px; transform: scale(1.5); }
-
-        /* Datas Múltiplas */
-        .date-container { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-add { background-color: #6c757d; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
-        .btn-remove { background-color: #dc3545; color: white; border: none; padding: 0 15px; cursor: pointer; border-radius: 4px; }
-
-        /* Áreas Condicionais */
-        #areaAtendimento, #areaFalta, #divOutroMotivo {
-            display: none;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            border-left: 4px solid var(--primary-color);
-            margin-top: 15px;
-        }
-        #areaFalta { border-left-color: #dc3545; }
-
-        /* Estilo especial para 20/X */
-        .acuidade-wrapper { display: flex; align-items: center; gap: 10px; }
-        .prefixo-20 { font-size: 1.2em; font-weight: bold; color: #555; white-space: nowrap; }
-
-        .btn-submit {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 30px;
-        }
+        .radio-option input { margin-right: 10px; transform: scale(1.5); }
+        .btn-submit { width: 100%; padding: 15px; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; font-size: 18px; cursor: pointer; margin-top: 20px; }
         .btn-submit:hover { background-color: #218838; }
-        .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
-
-        #loading { display: none; text-align: center; margin-top: 15px; color: var(--primary-color); font-weight: bold; }
-        #success-message { display: none; text-align: center; color: green; padding: 20px; border: 1px solid green; background: #e8f5e9; border-radius: 4px; margin-bottom: 20px;}
-
+        .btn-submit:disabled { background-color: #ccc; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="success-message">
-        <h3>Atendimento Salvo com Sucesso!</h3>
-        <button onclick="location.reload()" style="margin-top:10px; padding:10px; cursor:pointer;">Novo Atendimento</button>
+    <div id="success-message" style="display:none; text-align:center; color:green; background:#e8f5e9; padding:20px; margin-bottom:20px; border:1px solid green;">
+        <h3>Atendimento Finalizado!</h3>
+        <button onclick="location.reload()" style="padding:10px; cursor:pointer;">Próximo Paciente</button>
     </div>
 
     <form id="formAtendimento">
-        <input type="hidden" name="pagina_destino" value="Atendimentos">
-        <input type="hidden" name="Datas Agendamento" id="datasFinal">
-        <input type="hidden" name="Motivo Falta" id="motivoFinal">
+        <input type="hidden" name="action" value="atualizar"> <input type="hidden" name="id_agendamento" id="idAgendamento"> <input type="hidden" name="Motivo Falta" id="motivoFinal">
 
         <h1>FICHA DE ATENDIMENTO</h1>
 
         <div class="form-group" style="background: #eef5f9; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">
-            <label>🔎 Buscar Paciente (Digite CPF ou Nome):</label>
-            <input type="text" list="listaPacientes" id="inputBusca" placeholder="Carregando banco de dados..." disabled autocomplete="off">
-            <span id="status-busca">Aguarde...</span>
+            <label>🔎 Buscar na Fila de Espera (Nome ou CPF):</label>
+            <input type="text" list="listaPacientes" id="inputBusca" placeholder="Carregando agendamentos..." disabled autocomplete="off">
             <datalist id="listaPacientes"></datalist>
         </div>
 
         <div class="form-group">
+            <label style="color: #0056b3;">📅 Data Agendada (Recepção):</label>
+            <input type="text" id="dataAgendadaRececao" readonly style="background-color: #e3f2fd; border-color: #0056b3;">
+        </div>
+
+        <div class="form-group">
             <label>Nome do Paciente:</label>
-            <input type="text" name="Nome Paciente" id="nomePaciente" readonly required>
+            <input type="text" name="Nome Paciente" id="nomePaciente" readonly>
         </div>
 
         <div class="flex-row">
             <div class="flex-col" style="flex: 2;">
                 <label>Nome da Mãe:</label>
-                <input type="text" id="maePaciente" readonly placeholder="Mãe não informada">
+                <input type="text" id="maePaciente" readonly>
             </div>
             <div class="flex-col">
                 <label>Data de Nascimento:</label>
-                <input type="text" name="Data Nascimento" id="nascPaciente" readonly>
+                <input type="text" id="nascPaciente" readonly>
             </div>
         </div>
 
-        <div class="form-group" style="margin-top: 20px;">
+        <div class="form-group" style="margin-top: 15px;">
             <label>CPF:</label>
-            <input type="text" name="CPF Paciente" id="cpfPaciente" readonly>
+            <input type="text" id="cpfPaciente" readonly>
         </div>
 
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
-
-        <div class="form-group">
-            <label>Data(s) de Agendamento:</label>
-            <div id="listaDatas">
-                <div class="date-container">
-                    <input type="date" class="input-data" required>
-                </div>
-            </div>
-            <button type="button" class="btn-add" onclick="adicionarData()">+ Adicionar outra data</button>
-        </div>
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ccc;">
 
         <div class="form-group">
             <label>Paciente Compareceu?</label>
@@ -165,46 +86,18 @@
 
         <div id="areaAtendimento">
             <h3>Dados Clínicos</h3>
-            
             <div class="form-group">
                 <label>Atendido por: *</label>
                 <input type="text" name="Atendido Por" id="inputAtendidoPor" placeholder="Nome do profissional">
             </div>
-
-            <div class="form-group">
-                <label>Situação:</label>
-                <input type="text" name="Situação">
+            <div class="form-group"><label>Situação:</label><input type="text" name="Situação"></div>
+            <div class="form-group"><label>HD:</label><input type="text" name="HD"></div>
+            <div class="form-group"><label>AVL:</label>
+                <select name="AVL"><option value="">Selecione...</option><option value="C/C">C/C</option><option value="S/C">S/C</option></select>
             </div>
-
-            <div class="form-group">
-                <label>HD (Hipótese Diagnóstica):</label>
-                <input type="text" name="HD">
-            </div>
-
-            <div class="form-group">
-                <label>AVL (Acuidade Visual):</label>
-                <select name="AVL">
-                    <option value="">Selecione...</option>
-                    <option value="C/C">C/C (Com Correção)</option>
-                    <option value="S/C">S/C (Sem Correção)</option>
-                </select>
-            </div>
-
             <div class="flex-row">
-                <div class="flex-col">
-                    <label>OD (Olho Direito):</label>
-                    <div class="acuidade-wrapper">
-                        <span class="prefixo-20">20 /</span>
-                        <input type="number" name="OD" placeholder="Ex: 20">
-                    </div>
-                </div>
-                <div class="flex-col">
-                    <label>OE (Olho Esquerdo):</label>
-                    <div class="acuidade-wrapper">
-                        <span class="prefixo-20">20 /</span>
-                        <input type="number" name="OE" placeholder="Ex: 40">
-                    </div>
-                </div>
+                <div class="flex-col"><label>OD:</label><input type="text" name="OD" placeholder="20/..."></div>
+                <div class="flex-col"><label>OE:</label><input type="text" name="OE" placeholder="20/..."></div>
             </div>
         </div>
 
@@ -212,171 +105,154 @@
             <h3>Motivo da Ausência</h3>
             <div class="form-group">
                 <select id="selectMotivo">
-                    <option value="">Selecione o motivo...</option>
+                    <option value="">Selecione...</option>
                     <option value="Não atende as ligações">Não atende as ligações</option>
                     <option value="Número de telefone com problemas">Número de telefone com problemas</option>
                     <option value="Endereço não localizado">Endereço não localizado</option>
-                    <option value="Outros">Outros (Especificar)</option>
+                    <option value="Outros">Outros</option>
                 </select>
             </div>
-
             <div id="divOutroMotivo" class="form-group">
-                <label>Especifique o motivo:</label>
-                <input type="text" id="inputOutroMotivo">
+                <label>Especifique:</label><input type="text" id="inputOutroMotivo">
             </div>
         </div>
 
         <div class="form-group" style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed #ccc;">
             <label>Inclusão no projeto?</label>
             <div class="radio-group">
-                <label class="radio-option">
-                    <input type="radio" name="Inclusão Projeto" value="Sim"> Sim
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="Inclusão Projeto" value="Não"> Não
-                </label>
+                <label class="radio-option"><input type="radio" name="Inclusão Projeto" value="Sim"> Sim</label>
+                <label class="radio-option"><input type="radio" name="Inclusão Projeto" value="Não"> Não</label>
             </div>
         </div>
 
         <button type="submit" class="btn-submit">Salvar Atendimento</button>
-        <p id="loading">Enviando dados...</p>
-
+        <p id="loading" style="display:none; text-align:center;">Salvando...</p>
     </form>
 </div>
 
 <script>
-    // --- COLE SUA URL DO APPS SCRIPT AQUI ---
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwJJahFDt_cbY9yRQr7kbfyb8J1RcbGgks-jfp_5hbnFvFUVTRuUVIWVSP0QUyoByVh/exec'; 
+    // --- INSIRA SUA NOVA URL AQUI ---
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzoTrQPSYoVYdpD34xEWkMOMcxvdm1wG54NTeTF8d5XQKJqExXVJnlgfeGKqpVLP5MH/exec'; 
 
-    let pacientesData = [];
-
-    const form = document.getElementById('formAtendimento');
-    const loading = document.getElementById('loading');
-    const btn = document.querySelector('.btn-submit');
-    const successMsg = document.getElementById('success-message');
+    let filaEspera = [];
     const inputBusca = document.getElementById('inputBusca');
-    const statusBusca = document.getElementById('status-busca');
     const datalist = document.getElementById('listaPacientes');
 
-    // 1. CARREGAR LISTA
+    // 1. CARREGAR FILA DE ESPERA (com dados cruzados)
     window.onload = function() {
-        fetch(scriptURL)
-            .then(response => response.json())
+        // Chama action 'lista_espera' que traz Agendamento + Cadastro
+        fetch(scriptURL + "?action=lista_espera")
+            .then(r => r.json())
             .then(data => {
-                pacientesData = data;
-                statusBusca.innerText = "Pronto. Digite CPF ou Nome.";
-                statusBusca.style.color = "green";
+                filaEspera = data;
                 inputBusca.disabled = false;
-                inputBusca.placeholder = "Buscar paciente...";
                 
-                pacientesData.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = `${p.nome} | CPF: ${p.cpf}`;
-                    datalist.appendChild(option);
-                });
+                if(data.length === 0) {
+                    inputBusca.placeholder = "Nenhum paciente agendado/pendente.";
+                } else {
+                    inputBusca.placeholder = "Digite Nome ou CPF...";
+                    data.forEach(p => {
+                        const opt = document.createElement('option');
+                        // Exibe: NOME | DATA: 10/12/2025
+                        opt.value = `${p.nome} | DATA: ${formatarData(p.data_agenda)}`;
+                        datalist.appendChild(opt);
+                    });
+                }
             })
-            .catch(error => {
-                console.error(error);
-                statusBusca.innerText = "Erro na conexão com a planilha.";
-                statusBusca.style.color = "red";
+            .catch(err => {
+                inputBusca.placeholder = "Erro ao carregar fila.";
+                console.error(err);
             });
     };
 
-    // 2. BUSCA INTELIGENTE
+    function formatarData(dataISO) {
+        if(!dataISO) return "-";
+        try {
+            // Tenta formatar se vier yyyy-mm-dd
+            let d = new Date(dataISO);
+            // Ajuste simples de fuso horário visual
+            d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+            return d.toLocaleDateString('pt-BR');
+        } catch(e) { return dataISO; }
+    }
+
+    // 2. PREENCHER DADOS AO SELECIONAR
     inputBusca.addEventListener('input', function() {
         const val = this.value;
-        const pacienteEncontrado = pacientesData.find(p => `${p.nome} | CPF: ${p.cpf}` === val);
+        const p = filaEspera.find(x => `${x.nome} | DATA: ${formatarData(x.data_agenda)}` === val);
 
-        if (pacienteEncontrado) {
-            document.getElementById('nomePaciente').value = pacienteEncontrado.nome;
-            document.getElementById('cpfPaciente').value = pacienteEncontrado.cpf;
-            document.getElementById('nascPaciente').value = pacienteEncontrado.nascimento;
+        if (p) {
+            document.getElementById('idAgendamento').value = p.id; // Fundamental para atualizar
+            document.getElementById('nomePaciente').value = p.nome;
+            document.getElementById('cpfPaciente').value = p.cpf;
             
-            if(pacienteEncontrado.mae && pacienteEncontrado.mae.trim() !== "") {
-                document.getElementById('maePaciente').value = pacienteEncontrado.mae;
-            } else {
-                document.getElementById('maePaciente').value = "Não cadastrada";
-            }
+            // PREENCHE A DATA QUE VEIO DA RECEPÇÃO
+            document.getElementById('dataAgendadaRececao').value = formatarData(p.data_agenda);
+            
+            document.getElementById('maePaciente').value = p.mae || "Não informado";
+            document.getElementById('nascPaciente').value = p.nasc || "-";
         }
     });
 
-    // Adicionar Datas
-    function adicionarData() {
-        const container = document.getElementById('listaDatas');
-        const div = document.createElement('div');
-        div.className = 'date-container';
-        div.innerHTML = `
-            <input type="date" class="input-data" required>
-            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">X</button>
-        `;
-        container.appendChild(div);
-    }
-
-    // Toggle Compareceu (Lógica Atualizada)
-    function toggleComparecimento(compareceu) {
+    // Lógicas visuais (Sim/Não)
+    function toggleComparecimento(val) {
         const areaSim = document.getElementById('areaAtendimento');
         const areaNao = document.getElementById('areaFalta');
-        const selectNao = document.getElementById('selectMotivo');
-        const inputAtendidoPor = document.getElementById('inputAtendidoPor');
+        const inputAtendido = document.getElementById('inputAtendidoPor');
+        const selectMotivo = document.getElementById('selectMotivo');
 
-        if (compareceu) {
+        if (val) {
             areaSim.style.display = 'block';
             areaNao.style.display = 'none';
-            selectNao.value = ""; 
-            inputAtendidoPor.required = true; // Torna obrigatório se aparecer
+            inputAtendido.required = true;
+            selectMotivo.value = "";
         } else {
             areaSim.style.display = 'none';
             areaNao.style.display = 'block';
-            inputAtendidoPor.required = false; // Tira obrigação se sumir
-            inputAtendidoPor.value = ""; // Limpa o campo
+            inputAtendido.required = false;
+            inputAtendido.value = "";
         }
     }
 
-    // Outros Motivos
-    const selectMotivo = document.getElementById('selectMotivo');
-    const divOutroMotivo = document.getElementById('divOutroMotivo');
-    
-    selectMotivo.addEventListener('change', function() {
-        if (this.value === 'Outros') {
-            divOutroMotivo.style.display = 'block';
-        } else {
-            divOutroMotivo.style.display = 'none';
-            document.getElementById('inputOutroMotivo').value = "";
-        }
+    // Motivo Outros
+    document.getElementById('selectMotivo').addEventListener('change', function() {
+        const div = document.getElementById('divOutroMotivo');
+        div.style.display = (this.value === 'Outros') ? 'block' : 'none';
     });
 
-    // Enviar
-    form.addEventListener('submit', e => {
+    // Salvar
+    document.getElementById('formAtendimento').addEventListener('submit', function(e) {
         e.preventDefault();
-
-        // Juntar Datas
-        const inputsDatas = document.querySelectorAll('.input-data');
-        const listaDatas = Array.from(inputsDatas).map(input => input.value).filter(val => val);
-        document.getElementById('datasFinal').value = listaDatas.join('; ');
-
-        // Motivo
-        if (selectMotivo.value === 'Outros') {
-            document.getElementById('motivoFinal').value = document.getElementById('inputOutroMotivo').value;
-        } else {
-            document.getElementById('motivoFinal').value = selectMotivo.value;
+        
+        // Verifica se selecionou alguém
+        if(!document.getElementById('idAgendamento').value) {
+            alert("Selecione um paciente da lista primeiro!");
+            return;
         }
 
-        loading.style.display = 'block';
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
+        // Trata motivo
+        const sel = document.getElementById('selectMotivo');
+        if(sel.value === 'Outros') {
+            document.getElementById('motivoFinal').value = document.getElementById('inputOutroMotivo').value;
+        } else {
+            document.getElementById('motivoFinal').value = sel.value;
+        }
 
-        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-            .then(response => {
-                loading.style.display = 'none';
-                form.style.display = 'none';
-                successMsg.style.display = 'block';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            })
-            .catch(error => {
-                console.error('Error!', error.message);
-                loading.innerText = "Erro na conexão.";
-                btn.disabled = false;
-                btn.style.opacity = '1';
+        const btn = document.querySelector('.btn-submit');
+        btn.disabled = true;
+        btn.innerText = "Salvando...";
+
+        fetch(scriptURL, { method: 'POST', body: new FormData(this) })
+            .then(r => r.json())
+            .then(res => {
+                if(res.result === 'success') {
+                    document.getElementById('formAtendimento').style.display = 'none';
+                    document.getElementById('success-message').style.display = 'block';
+                } else {
+                    alert("Erro: " + res.error);
+                    btn.disabled = false;
+                    btn.innerText = "Tentar Novamente";
+                }
             });
     });
 </script>
