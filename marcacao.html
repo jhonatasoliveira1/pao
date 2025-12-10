@@ -109,10 +109,9 @@
             <div class="actions-area">
                 <h4>Registrar Feedback do Contato:</h4>
                 <div class="btn-group">
-                    <button class="btn-yellow" onclick="salvarFeedback('Não atendeu')">📵 Não Atendeu</button>
-                    <button class="btn-yellow" onclick="salvarFeedback('Ocupado')">⚠️ Ocupado</button>
-                    <button class="btn-red" onclick="salvarFeedback('Número Errado')">❌ Número Errado</button>
-                    <button class="btn-yellow" onclick="salvarFeedback('Pediu para retornar')">📞 Retornar Depois</button>
+                    <button class="btn-yellow" onclick="salvarFeedback('Tentativa (Não atendeu)')">📵 Não Atendeu</button>
+                    <button class="btn-yellow" onclick="salvarFeedback('Tentativa (Ocupado)')">⚠️ Ocupado</button>
+                    <button class="btn-red" onclick="salvarFeedback('Falha (Número Errado)')">❌ Número Errado</button>
                 </div>
                 
                 <hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">
@@ -131,8 +130,8 @@
     </div>
 
     <script>
-        // --- SUBSTITUA PELA SUA URL DO GOOGLE APPS SCRIPT ---
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwpSCqqjY9dSMmVbOosIiwLAJdpcEF3w5P26YxmNiFjf90L0w2oXOd6yGgY8G4vprdV/exec';
+        // --- COLOQUE SUA NOVA URL DO GOOGLE APPS SCRIPT AQUI ---
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw1A4esr5gRdSN0NowFzSOteUa-bs8Th8uJY1AcdQP8U2bHC_df_-Vu1rz0gVLGqEPi/exec';
         
         let pacientes = [];
         let pacienteAtual = null;
@@ -158,9 +157,10 @@
                 });
         };
 
-        // 2. Preencher Select de Escolas
+        // 2. Preencher Select de Escolas Automaticamente
         function preencherFiltroEscolas(data) {
             const select = document.getElementById('filter-school');
+            // Extrai escolas únicas e remove vazios
             const escolas = [...new Set(data.map(p => p.unidade).filter(u => u))].sort();
             
             escolas.forEach(escola => {
@@ -171,7 +171,7 @@
             });
         }
 
-        // 3. Renderizar Lista
+        // 3. Renderizar Lista (Com Filtros)
         function renderizarLista(lista) {
             const container = document.getElementById('lista');
             const termo = document.getElementById('search').value.toLowerCase();
@@ -181,34 +181,27 @@
             container.innerHTML = "";
 
             lista.forEach(p => {
+                // Filtros Lógicos
                 if (!p.nome.toLowerCase().includes(termo)) return;
-                if (!showScheduled && p.status && p.status.includes('Agendado')) return;
+                if (!showScheduled && p.status === 'Agendado') return;
                 if (escolaFiltro && p.unidade !== escolaFiltro) return;
 
                 const card = document.createElement('div');
-                
-                // Define classe visual
-                let statusClass = 'Novo';
-                if (p.status) {
-                    if (p.status.includes("Tentativa")) statusClass = "Tentativa";
-                    else if (p.status.includes("Agendado")) statusClass = "Agendado";
-                    else if (p.status.includes("Falha") || p.status.includes("Errado")) statusClass = "Falha";
-                }
+                // Define cor baseada no status (pega primeira palavra: Tentativa, Falha, Novo, Agendado)
+                let statusClass = (p.status || 'Novo').split(' ')[0];
+                if(statusClass.includes("Tentativa")) statusClass = "Tentativa"; // Garante match
                 
                 card.className = `card status-${statusClass}`;
-                if(statusClass === 'Agendado') card.style.display = showScheduled ? 'block' : 'none';
+                if(p.status === 'Agendado') card.style.display = showScheduled ? 'block' : 'none';
 
+                // Ícone Visual
                 let icon = "⚪";
-                if(statusClass === "Tentativa") icon = "🟡";
-                if(statusClass === "Falha") icon = "🔴";
-                if(statusClass === "Agendado") icon = "🟢";
-
-                // Mostra apenas o início do status se for muito longo
-                let statusDisplay = p.status || 'Novo';
-                if(statusDisplay.length > 30) statusDisplay = "Ver Histórico...";
+                if(p.status && p.status.includes("Tentativa")) icon = "🟡";
+                if(p.status && p.status.includes("Falha")) icon = "🔴";
+                if(p.status === "Agendado") icon = "🟢";
 
                 card.innerHTML = `
-                    <span class="badge">${statusDisplay}</span>
+                    <span class="badge">${p.status || 'Novo'}</span>
                     <span class="p-name">${p.nome}</span>
                     <span class="p-school">🏫 ${p.unidade || 'Sem unidade'}</span>
                     <span class="p-info">${icon} CPF: ${p.cpf}</span>
@@ -223,6 +216,7 @@
             }
         }
 
+        // Eventos de Filtro
         document.getElementById('search').addEventListener('input', () => renderizarLista(pacientes));
         document.getElementById('show-scheduled').addEventListener('change', () => renderizarLista(pacientes));
         document.getElementById('filter-school').addEventListener('change', () => renderizarLista(pacientes));
@@ -240,7 +234,7 @@
 
             document.getElementById('d-nome').innerText = p.nome;
             document.getElementById('d-unidade').innerText = p.unidade || "Não informada";
-            document.getElementById('d-status').innerText = p.status || "Novo"; // Mostra status completo aqui
+            document.getElementById('d-status').innerText = p.status || "Novo";
             document.getElementById('d-cpf').innerText = p.cpf;
             document.getElementById('d-nasc').innerText = p.nasc;
             document.getElementById('d-mae').innerText = p.mae;
@@ -248,19 +242,15 @@
             document.getElementById('d-tel2').innerText = p.tel2;
         }
 
-        // 5. Salvar Feedback (MODIFICADO PARA O FORMATO PEDIDO)
-        function salvarFeedback(feedback) {
-            // Pega Data e Hora atuais
-            const agora = new Date();
-            const dataStr = agora.toLocaleDateString('pt-BR');
-            const horaStr = agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            
-            // Formato: Tentativa (10/12/2025 14:00) - Motivo
-            const statusFormatado = `Tentativa (${dataStr} ${horaStr}) - ${feedback}`;
+        // 5. Salvar Feedback (COM DATA AUTOMÁTICA)
+        function salvarFeedback(statusBase) {
+            // Pega a data de hoje no formato brasileiro
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            const statusComData = `${statusBase} - ${hoje}`;
 
-            if(!confirm(`Confirmar registro:\n${statusFormatado}?`)) return;
+            if(!confirm(`Confirmar registro: ${statusComData}?`)) return;
             
-            enviarDados(statusFormatado, null);
+            enviarDados(statusComData, null);
         }
 
         function mostrarAgendamento() {
@@ -270,12 +260,7 @@
         function confirmarAgendamento() {
             const data = document.getElementById('input-data-agenda').value;
             if(!data) { alert("Escolha uma data!"); return; }
-            
-            // Converter data input (yyyy-mm-dd) para pt-BR
-            const dataParts = data.split('-');
-            const dataBR = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
-            
-            enviarDados(`Agendado para ${dataBR}`, data);
+            enviarDados("Agendado", data);
         }
 
         function enviarDados(statusNovo, dataAgenda) {
@@ -286,9 +271,7 @@
             const formData = new FormData();
             formData.append('action', 'salvar_marcacao');
             formData.append('linha_planilha', pacienteAtual.linha);
-            
-            // O Backend (Script) deve estar configurado para adicionar este texto ao anterior
-            formData.append('status_novo', statusNovo); 
+            formData.append('status_novo', statusNovo);
             
             if(dataAgenda) {
                 formData.append('nome', pacienteAtual.nome);
@@ -303,15 +286,10 @@
                         alert("Salvo com sucesso!");
                         location.reload();
                     } else {
-                        alert("Erro ao salvar: " + res.message);
+                        alert("Erro ao salvar.");
                         btns.forEach(b => b.disabled = false);
                         document.body.style.cursor = "default";
                     }
-                })
-                .catch(err => {
-                    alert("Erro de conexão.");
-                    btns.forEach(b => b.disabled = false);
-                    document.body.style.cursor = "default";
                 });
         }
     </script>
