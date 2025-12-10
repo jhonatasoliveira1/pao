@@ -154,8 +154,8 @@
                     inputBusca.placeholder = "Digite Nome ou CPF...";
                     data.forEach(p => {
                         const opt = document.createElement('option');
-                        // Exibe: NOME | DATA: ...
-                        opt.value = `${p.nome} | DATA: ${formatarData(p.data_agenda)}`;
+                        // Exibe: NOME | CPF
+                        opt.value = `${p.nome} | CPF: ${p.cpf}`;
                         datalist.appendChild(opt);
                     });
                 }
@@ -166,46 +166,33 @@
             });
     };
 
-    // --- FUNÇÃO DE DATA BLINDADA (CORREÇÃO AQUI) ---
     function formatarData(data) {
         if (!data) return "-";
-        
-        // Se a data já tiver barra (ex: 25/12/2025), o script já mandou certo. Retorna ela mesma.
-        if (data.includes('/')) {
-            // Remove o 'T' e hora se vier junto por acidente (ex: 25/12/2025T00...)
-            return data.split('T')[0];
-        }
-
-        // Se vier com traço (ex: 2025-12-25), formata.
+        if (data.includes('/')) return data.split('T')[0];
         if (data.includes('-')) {
             try {
                 let partes = data.split('T')[0].split('-');
-                if(partes.length === 3) {
-                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-                }
+                if(partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
             } catch(e) { return data; }
         }
-        
-        // Se não souber o que é, devolve o texto original sem dar erro
-        return data; 
+        return data;
     }
 
     // 2. PREENCHER DADOS AO SELECIONAR
     inputBusca.addEventListener('input', function() {
         const val = this.value;
-        // Compara usando a mesma função de formatação
-        const p = filaEspera.find(x => `${x.nome} | DATA: ${formatarData(x.data_agenda)}` === val);
+        // Busca na lista usando a chave NOME | CPF
+        const p = filaEspera.find(x => `${x.nome} | CPF: ${x.cpf}` === val);
 
         if (p) {
             document.getElementById('idAgendamento').value = p.id;
             document.getElementById('nomePaciente').value = p.nome;
             document.getElementById('cpfPaciente').value = p.cpf;
             
-            // PREENCHE A DATA (usando a função blindada)
+            // PREENCHE A DATA QUE VEIO DA MARCAÇÃO
             document.getElementById('dataAgendadaRececao').value = formatarData(p.data_agenda);
             
             document.getElementById('maePaciente').value = p.mae || "Não informado";
-            // Aplica a mesma proteção para a data de nascimento
             document.getElementById('nascPaciente').value = formatarData(p.nasc) || "-";
         }
     });
