@@ -36,6 +36,8 @@
         
         .form-group { margin-bottom: 15px; position: relative; }
         label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .note { font-size: 0.85em; color: #666; display: block; margin-top: -3px; margin-bottom: 5px;}
+        
         input, select, textarea {
             width: 100%;
             padding: 10px;
@@ -48,6 +50,7 @@
         
         /* Campo Readonly (Endereço Automático) */
         input[readonly] { background-color: #e9ecef; color: #555; cursor: default; }
+        input:not([readonly]) { background-color: #fff; }
 
         /* Caixa de Alerta (Telefones) */
         .alert-box {
@@ -74,8 +77,8 @@
         input.error { border-color: var(--error-color); background-color: #fff8f8; }
         .error-msg { color: var(--error-color); font-size: 0.85em; display: none; margin-top: 5px; }
         
-        /* Campo Condicional (Outra Deficiência) */
-        #divOutraDeficiencia {
+        /* Campos Condicionais */
+        #divOutraDeficiencia, #divNomeOutraUnidade {
             display: none;
             margin-top: 10px;
             background-color: #f0f8ff;
@@ -181,7 +184,7 @@
                 <label for="Deficiência">Deficiência (Motivo do encaminhamento) *</label>
                 <select name="Deficiência" id="selectDeficiencia" required>
                     <option value="" disabled selected>Selecione...</option>
-                    <option value="Suspeita de baixa visão">Suspeita de baixa visão</option>
+                    <option value="Sinais e sintomas de dificuldades visuais">Sinais e sintomas de dificuldades visuais</option>
                     <option value="Síndrome Congênita do Zika Vírus (SCZV)">Síndrome Congênita do Zika Vírus (SCZV)</option>
                     <option value="Deficiência visual - Baixa visão">Deficiência visual - Baixa visão</option>
                     <option value="Deficiência visual - Cegueira">Deficiência visual - Cegueira</option>
@@ -308,8 +311,15 @@
             <div class="form-group">
                 <label for="Unidade Solicitante">Nome da Unidade * (Digite para buscar)</label>
                 <input type="text" list="listaUnidades" id="inputUnidade" name="Unidade Solicitante" required placeholder="Ex: Escola Municipal..." autocomplete="off">
+                <span class="note">(Se não encontrar o nome na lista, escolher "Outra" e escrever o nome da escola ou da unidade de saúde)</span>
+                
                 <datalist id="listaUnidades">
                     </datalist>
+
+                <div id="divNomeOutraUnidade">
+                    <label for="Nome Outra Unidade">Digite o nome da Unidade:</label>
+                    <input type="text" id="inputNomeOutra" placeholder="Digite o nome correto aqui">
+                </div>
             </div>
 
             <div class="form-group">
@@ -325,6 +335,7 @@
                 <div class="form-group" style="flex: 1;">
                     <label for="Distrito Sanitário">Distrito Sanitário</label>
                     <select name="Distrito Sanitário"><option value="">Selecione...</option><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option><option value="VI">VI</option><option value="VII">VII</option><option value="VIII">VIII</option></select>
+                    <span class="note">(quando unidade de saúde)</span>
                 </div>
             </div>
 
@@ -356,6 +367,7 @@
     
     // --- BANCO DE DADOS DAS UNIDADES E ENDEREÇOS ---
     const unidadesData = {
+        "Outra": "", // Opção para destravar manual
         "CMEI Brasília Teimosa": "Rua Delfin, 55, Brasília Teimosa",
         "Colégio Integral em Piedade": "Piedade, Jaboatão dos Guararapes",
         "Creche Escola Ana Rosa Falcão de Carvalho": "Rua João Lira, S/N, Santo Amaro",
@@ -503,16 +515,38 @@
         datalist.appendChild(option);
     });
 
-    // Evento para preencher endereço automaticamente
+    // Evento da Unidade Solicitante
     const inputUnidade = document.getElementById('inputUnidade');
     const inputEndereco = document.getElementById('inputEnderecoUnidade');
+    const divOutraUnidade = document.getElementById('divNomeOutraUnidade');
+    const inputNomeOutra = document.getElementById('inputNomeOutra');
 
     inputUnidade.addEventListener('input', function() {
         const nomeSelecionado = this.value;
-        if (unidadesData[nomeSelecionado]) {
-            inputEndereco.value = unidadesData[nomeSelecionado];
-        } else {
+        
+        // Se escolheu "Outra"
+        if (nomeSelecionado === 'Outra') {
+            divOutraUnidade.style.display = 'block';
+            inputNomeOutra.required = true;
+            inputEndereco.readOnly = false; // Destrava endereço
             inputEndereco.value = "";
+            inputEndereco.placeholder = "Digite o endereço completo";
+        
+        // Se escolheu algo da lista (que não seja Outra)
+        } else if (unidadesData[nomeSelecionado]) {
+            divOutraUnidade.style.display = 'none';
+            inputNomeOutra.required = false;
+            inputEndereco.readOnly = true; // Trava endereço
+            inputEndereco.value = unidadesData[nomeSelecionado];
+            inputEndereco.classList.remove('error');
+        
+        // Se digitou algo manual que não está na lista
+        } else {
+            divOutraUnidade.style.display = 'none';
+            inputNomeOutra.required = false;
+            inputEndereco.readOnly = false; // Destrava endereço para preencher
+            inputEndereco.value = "";
+            inputEndereco.placeholder = "Digite o endereço completo da unidade";
         }
     });
 
@@ -676,19 +710,15 @@
             cnsMsg.style.display = 'none';
         }
 
-        // Validar Telefones (Tamanho e Duplicidade)
+        // Validar Telefones
         const tel1Input = document.getElementById('Tel1');
         const tel2Input = document.getElementById('Tel2');
         const tel1Clean = tel1Input.value.replace(/\D/g, "");
         const tel2Clean = tel2Input.value.replace(/\D/g, "");
-        
         const msgTel2 = document.getElementById('msg-tel2');
         const msgDup = document.getElementById('msg-duplicate-tel');
-        
-        // Reset msg duplicidade
         msgDup.style.display = 'none';
-        
-        // Valida tamanho Tel 1
+
         if (tel1Clean.length !== 11) {
             tel1Input.classList.add('error');
             tel1Input.nextElementSibling.style.display = 'block';
@@ -698,7 +728,6 @@
             tel1Input.nextElementSibling.style.display = 'none';
         }
 
-        // Valida tamanho Tel 2
         if (tel2Clean.length !== 11) {
             tel2Input.classList.add('error');
             msgTel2.style.display = 'block';
@@ -708,7 +737,6 @@
             msgTel2.style.display = 'none';
         }
 
-        // Valida se são IGUAIS (e se ambos estão preenchidos corretamente)
         if (tel1Clean.length === 11 && tel2Clean.length === 11 && tel1Clean === tel2Clean) {
             tel2Input.classList.add('error');
             msgDup.style.display = 'block';
@@ -722,6 +750,12 @@
         const complemento = document.getElementById('end_complemento').value;
         const enderecoCompleto = `${logradouro}, Nº ${numero}, ${bairro}${complemento ? ' - ' + complemento : ''}`;
         document.getElementById('enderecoFinal').value = enderecoCompleto;
+
+        // --- TRATAMENTO DO NOME DA UNIDADE (SE FOR OUTRA) ---
+        // Se a pessoa selecionou Outra, substituímos o valor "Outra" pelo que ela digitou
+        if (inputUnidade.value === 'Outra') {
+            inputUnidade.value = inputNomeOutra.value;
+        }
 
         if (temErro) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
