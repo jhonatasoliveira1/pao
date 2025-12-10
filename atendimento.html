@@ -12,7 +12,7 @@
             --error-color: #dc3545;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, VAerdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
@@ -42,7 +42,7 @@
             box-sizing: border-box;
         }
         input:focus, select:focus { border-color: var(--primary-color); outline: none; }
-        input[readonly] { background-color: #e9ecef; color: #555; font-weight: 500; }
+        input[readonly] { background-color: #e9ecef; color: #333; font-weight: bold; }
 
         /* Estilo da Busca */
         #status-busca { font-size: 0.85em; color: #666; margin-top: 5px; font-style: italic; }
@@ -126,7 +126,7 @@
         <div class="flex-row">
             <div class="flex-col" style="flex: 2;">
                 <label>Nome da Mãe:</label>
-                <input type="text" id="maePaciente" readonly>
+                <input type="text" id="maePaciente" readonly placeholder="Mãe não informada">
             </div>
             <div class="flex-col">
                 <label>Data de Nascimento:</label>
@@ -246,7 +246,7 @@
 
 <script>
     // --- COLE SUA URL DO APPS SCRIPT AQUI ---
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwZcmdDIlIAI0Miym0P6-5eg1fwa4hP-pfPG5djVmKC1eveEXra9_oZm32SAa-AMZTh/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyrqURHzXsyJjW6bKJEtAZ_m8woWfDG6URLwo_2kEeElryhFGgKB71fhwydEnNLDMhV/exec'; 
 
     let pacientesData = [];
 
@@ -291,8 +291,14 @@
         if (pacienteEncontrado) {
             document.getElementById('nomePaciente').value = pacienteEncontrado.nome;
             document.getElementById('cpfPaciente').value = pacienteEncontrado.cpf;
-            document.getElementById('nascPaciente').value = pacienteEncontrado.nascimento; // Data Formatada
-            document.getElementById('maePaciente').value = pacienteEncontrado.mae || "Não informado";
+            document.getElementById('nascPaciente').value = pacienteEncontrado.nascimento;
+            
+            // Verifica se a mãe veio vazia
+            if(pacienteEncontrado.mae && pacienteEncontrado.mae.trim() !== "") {
+                document.getElementById('maePaciente').value = pacienteEncontrado.mae;
+            } else {
+                document.getElementById('maePaciente').value = "Não cadastrada";
+            }
         }
     });
 
