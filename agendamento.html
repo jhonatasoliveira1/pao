@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento - Recepção</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-top: 5px solid #0056b3; }
+        h1 { color: #0056b3; text-align: center; }
+        input, button { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;}
+        button { background: #0056b3; color: white; font-weight: bold; border: none; cursor: pointer; }
+        button:hover { background: #004494; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Novo Agendamento</h1>
+        <label>Buscar Paciente (Cadastro):</label>
+        <input type="text" list="listaPacientes" id="buscaPaciente" placeholder="Digite CPF ou Nome...">
+        <datalist id="listaPacientes"></datalist>
+
+        <label>Nome Confirmado:</label>
+        <input type="text" id="nomeFinal" readonly style="background: #eee;">
+        
+        <label>CPF Confirmado:</label>
+        <input type="text" id="cpfFinal" readonly style="background: #eee;">
+
+        <label>Data para Agendamento:</label>
+        <input type="date" id="dataAgenda" required>
+
+        <button onclick="salvarAgendamento()" id="btnSalvar">Agendar Paciente</button>
+        <p id="msg" style="text-align: center;"></p>
+    </div>
+
+    <script>
+        const scriptURL = 'COLE_SUA_URL_AQUI'; // <--- TIPO: "lista_pacientes"
+
+        let pacientes = [];
+        
+        // Carrega lista do cadastro
+        window.onload = () => {
+            fetch(scriptURL + "?tipo=lista_pacientes")
+                .then(r => r.json())
+                .then(data => {
+                    pacientes = data;
+                    data.forEach(p => {
+                        let opt = document.createElement('option');
+                        opt.value = `${p.nome} | CPF: ${p.cpf}`;
+                        document.getElementById('listaPacientes').appendChild(opt);
+                    });
+                });
+        };
+
+        // Seleciona paciente
+        document.getElementById('buscaPaciente').addEventListener('input', function() {
+            let val = this.value;
+            let p = pacientes.find(x => `${x.nome} | CPF: ${x.cpf}` === val);
+            if(p) {
+                document.getElementById('nomeFinal').value = p.nome;
+                document.getElementById('cpfFinal').value = p.cpf;
+            }
+        });
+
+        function salvarAgendamento() {
+            let nome = document.getElementById('nomeFinal').value;
+            let cpf = document.getElementById('cpfFinal').value;
+            let data = document.getElementById('dataAgenda').value;
+            let btn = document.getElementById('btnSalvar');
+            let msg = document.getElementById('msg');
+
+            if(!nome || !data) { alert("Selecione paciente e data"); return; }
+
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            let formData = new FormData();
+            formData.append('action', 'agendar');
+            formData.append('nome', nome);
+            formData.append('cpf', cpf);
+            formData.append('data_agendamento', data);
+
+            fetch(scriptURL, { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(res => {
+                    if(res.result === 'success') {
+                        msg.innerText = "Agendado com sucesso!";
+                        msg.style.color = "green";
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        msg.innerText = "Erro ao salvar.";
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
