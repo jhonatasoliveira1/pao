@@ -10,6 +10,8 @@
             --bg-color: #f4f7f6;
             --text-color: #333;
             --error-color: #dc3545;
+            --warning-bg: #fff3cd;
+            --warning-text: #856404;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -46,6 +48,17 @@
         
         /* Campo Readonly (Endereço Automático) */
         input[readonly] { background-color: #e9ecef; color: #555; cursor: default; }
+
+        /* Caixa de Alerta (Telefones) */
+        .alert-box {
+            background-color: var(--warning-bg);
+            color: var(--warning-text);
+            padding: 15px;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
 
         /* Campo de carregamento do CEP */
         .cep-loading { 
@@ -254,6 +267,12 @@
             <input type="hidden" name="Endereço" id="enderecoFinal">
 
             <h3>Contatos e Responsáveis</h3>
+
+            <div class="alert-box">
+                <strong>⚠️ ATENÇÃO:</strong><br>
+                Os telefones devem ser de <strong>pessoas que acompanham e cuidam da criança</strong> (Mãe, Pai, Avó...).<br>
+                É obrigatório informar <strong>dois números diferentes</strong> para contato.
+            </div>
             
             <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -274,7 +293,8 @@
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label for="Tel Segundo Contato">Telefone Secundário *</label>
                         <input type="tel" id="Tel2" name="Tel Segundo Contato" required placeholder="(xx) 9xxxx-xxxx" maxlength="15">
-                        <span class="error-msg">Preencha DDD + 9 dígitos.</span>
+                        <span class="error-msg" id="msg-tel2">Preencha DDD + 9 dígitos.</span>
+                        <span class="error-msg" id="msg-duplicate-tel" style="color: red; font-weight: bold;">Os telefones não podem ser iguais.</span>
                     </div>
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label for="Quem Contato 2">De quem é este número? *</label>
@@ -492,9 +512,6 @@
         if (unidadesData[nomeSelecionado]) {
             inputEndereco.value = unidadesData[nomeSelecionado];
         } else {
-            // Se o usuário digitar algo que não está na lista, permite editar ou deixa em branco?
-            // Por padrão, deixamos em branco para forçar escolher da lista, ou pode deixar livre.
-            // Aqui vamos limpar se não bater com a lista para evitar erro.
             inputEndereco.value = "";
         }
     });
@@ -659,20 +676,44 @@
             cnsMsg.style.display = 'none';
         }
 
-        // Validar Telefones
-        ['Tel1', 'Tel2'].forEach(id => {
-            const telInput = document.getElementById(id);
-            const telClean = telInput.value.replace(/\D/g, "");
-            const telMsg = telInput.nextElementSibling;
-            if (telClean.length !== 11) {
-                telInput.classList.add('error');
-                if(telMsg) telMsg.style.display = 'block';
-                temErro = true;
-            } else {
-                telInput.classList.remove('error');
-                if(telMsg) telMsg.style.display = 'none';
-            }
-        });
+        // Validar Telefones (Tamanho e Duplicidade)
+        const tel1Input = document.getElementById('Tel1');
+        const tel2Input = document.getElementById('Tel2');
+        const tel1Clean = tel1Input.value.replace(/\D/g, "");
+        const tel2Clean = tel2Input.value.replace(/\D/g, "");
+        
+        const msgTel2 = document.getElementById('msg-tel2');
+        const msgDup = document.getElementById('msg-duplicate-tel');
+        
+        // Reset msg duplicidade
+        msgDup.style.display = 'none';
+        
+        // Valida tamanho Tel 1
+        if (tel1Clean.length !== 11) {
+            tel1Input.classList.add('error');
+            tel1Input.nextElementSibling.style.display = 'block';
+            temErro = true;
+        } else {
+            tel1Input.classList.remove('error');
+            tel1Input.nextElementSibling.style.display = 'none';
+        }
+
+        // Valida tamanho Tel 2
+        if (tel2Clean.length !== 11) {
+            tel2Input.classList.add('error');
+            msgTel2.style.display = 'block';
+            temErro = true;
+        } else {
+            tel2Input.classList.remove('error');
+            msgTel2.style.display = 'none';
+        }
+
+        // Valida se são IGUAIS (e se ambos estão preenchidos corretamente)
+        if (tel1Clean.length === 11 && tel2Clean.length === 11 && tel1Clean === tel2Clean) {
+            tel2Input.classList.add('error');
+            msgDup.style.display = 'block';
+            temErro = true;
+        }
 
         // --- CONCATENAÇÃO DO ENDEREÇO DA CRIANÇA ---
         const logradouro = document.getElementById('end_logradouro').value;
