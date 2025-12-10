@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Atendimento - Além do Olhar</title>
+    <style>
+        :root {
+            --primary-color: #28a745; /* Verde para diferenciar do cadastro (Azul) */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --error-color: #dc3545;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary-color);
+        }
+        h1 { text-align: center; color: var(--primary-color); margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        /* Botões de Sim/Não (Radio Personalizado) */
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .radio-option input {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.5);
+        }
+
+        /* Área de Datas Múltiplas */
+        .date-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .btn-add {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 0 15px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        /* Áreas Condicionais */
+        #areaAtendimento, #areaFalta, #divOutroMotivo {
+            display: none;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid var(--primary-color);
+            margin-top: 15px;
+        }
+        #areaFalta { border-left-color: #dc3545; }
+
+        /* Estilo especial para 20/X */
+        .acuidade-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .prefixo-20 {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+        .btn-submit:hover { background-color: #218838; }
+
+        #loading { display: none; text-align: center; margin-top: 15px; color: var(--primary-color); font-weight: bold; }
+        #success-message { display: none; text-align: center; color: green; padding: 20px; border: 1px solid green; background: #e8f5e9; border-radius: 4px; margin-bottom: 20px;}
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="success-message">
+        <h3>Dados Salvos!</h3>
+        <button onclick="location.reload()" style="margin-top:10px; padding:10px; cursor:pointer;">Novo Atendimento</button>
+    </div>
+
+    <form id="formAtendimento">
+        <input type="hidden" name="pagina_destino" value="Atendimentos">
+        <input type="hidden" name="Datas Agendamento" id="datasFinal">
+        <input type="hidden" name="Motivo Falta" id="motivoFinal">
+
+        <h1>FICHA DE ATENDIMENTO</h1>
+
+        <div class="form-group">
+            <label>Atendido por:</label>
+            <input type="text" name="Atendido Por" required placeholder="Nome do profissional">
+        </div>
+
+        <div class="form-group">
+            <label>Nome do Paciente:</label>
+            <input type="text" name="Nome Paciente" required>
+        </div>
+
+        <div class="form-group">
+            <label>Data(s) de Agendamento:</label>
+            <div id="listaDatas">
+                <div class="date-container">
+                    <input type="date" class="input-data" required>
+                </div>
+            </div>
+            <button type="button" class="btn-add" onclick="adicionarData()">+ Adicionar outra data</button>
+        </div>
+
+        <div class="form-group">
+            <label>Inclusão no projeto?</label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="Inclusão Projeto" value="Sim" required> Sim
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="Inclusão Projeto" value="Não"> Não
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Paciente Compareceu?</label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="Compareceu" value="Sim" onclick="toggleComparecimento(true)" required> Sim
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="Compareceu" value="Não" onclick="toggleComparecimento(false)"> Não
+                </label>
+            </div>
+        </div>
+
+        <div id="areaAtendimento">
+            <h3>Dados Clínicos</h3>
+            
+            <div class="form-group">
+                <label>Situação:</label>
+                <input type="text" name="Situação">
+            </div>
+
+            <div class="form-group">
+                <label>HD (Hipótese Diagnóstica):</label>
+                <input type="text" name="HD">
+            </div>
+
+            <div class="form-group">
+                <label>AVL (Acuidade Visual):</label>
+                <select name="AVL">
+                    <option value="">Selecione...</option>
+                    <option value="C/C">C/C (Com Correção)</option>
+                    <option value="S/C">S/C (Sem Correção)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 20px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>OD (Olho Direito):</label>
+                    <div class="acuidade-wrapper">
+                        <span class="prefixo-20">20 /</span>
+                        <input type="number" name="OD" placeholder="Ex: 20">
+                    </div>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>OE (Olho Esquerdo):</label>
+                    <div class="acuidade-wrapper">
+                        <span class="prefixo-20">20 /</span>
+                        <input type="number" name="OE" placeholder="Ex: 40">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="areaFalta">
+            <h3>Motivo da Ausência</h3>
+            <div class="form-group">
+                <select id="selectMotivo">
+                    <option value="">Selecione o motivo...</option>
+                    <option value="Não atende as ligações">Não atende as ligações</option>
+                    <option value="Número de telefone com problemas">Número de telefone com problemas</option>
+                    <option value="Endereço não localizado">Endereço não localizado</option>
+                    <option value="Outros">Outros (Especificar)</option>
+                </select>
+            </div>
+
+            <div id="divOutroMotivo" class="form-group">
+                <label>Especifique o motivo:</label>
+                <input type="text" id="inputOutroMotivo">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Salvar Atendimento</button>
+        <p id="loading">Enviando dados...</p>
+
+    </form>
+</div>
+
+<script>
+    // --- COLE SUA URL DO APPS SCRIPT AQUI ---
+    const scriptURL = 'COLE_AQUI_SUA_NOVA_URL_DO_GOOGLE_APPS_SCRIPT'; 
+
+    const form = document.getElementById('formAtendimento');
+    const loading = document.getElementById('loading');
+    const btn = document.querySelector('.btn-submit');
+    const successMsg = document.getElementById('success-message');
+
+    // Lógica para Adicionar Múltiplas Datas
+    function adicionarData() {
+        const container = document.getElementById('listaDatas');
+        const div = document.createElement('div');
+        div.className = 'date-container';
+        div.innerHTML = `
+            <input type="date" class="input-data" required>
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    // Lógica Compareceu (Sim/Não)
+    function toggleComparecimento(compareceu) {
+        const areaSim = document.getElementById('areaAtendimento');
+        const areaNao = document.getElementById('areaFalta');
+        const camposSim = areaSim.querySelectorAll('input, select');
+        const selectNao = document.getElementById('selectMotivo');
+
+        if (compareceu) {
+            areaSim.style.display = 'block';
+            areaNao.style.display = 'none';
+            // Torna campos do 'Sim' obrigatórios se necessário (opcional)
+            selectNao.value = ""; // Limpa motivo
+        } else {
+            areaSim.style.display = 'none';
+            areaNao.style.display = 'block';
+            // Limpa campos do 'Sim'
+            camposSim.forEach(c => c.value = "");
+        }
+    }
+
+    // Lógica "Outros" no Motivo
+    const selectMotivo = document.getElementById('selectMotivo');
+    const divOutroMotivo = document.getElementById('divOutroMotivo');
+    
+    selectMotivo.addEventListener('change', function() {
+        if (this.value === 'Outros') {
+            divOutroMotivo.style.display = 'block';
+        } else {
+            divOutroMotivo.style.display = 'none';
+            document.getElementById('inputOutroMotivo').value = "";
+        }
+    });
+
+    // Envio do Formulário
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+
+        // 1. Juntar Datas
+        const inputsDatas = document.querySelectorAll('.input-data');
+        const listaDatas = Array.from(inputsDatas).map(input => input.value).filter(val => val);
+        document.getElementById('datasFinal').value = listaDatas.join('; ');
+
+        // 2. Definir Motivo Final
+        if (selectMotivo.value === 'Outros') {
+            document.getElementById('motivoFinal').value = document.getElementById('inputOutroMotivo').value;
+        } else {
+            document.getElementById('motivoFinal').value = selectMotivo.value;
+        }
+
+        loading.style.display = 'block';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+
+        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+            .then(response => {
+                loading.style.display = 'none';
+                form.style.display = 'none';
+                successMsg.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch(error => {
+                console.error('Error!', error.message);
+                loading.innerText = "Erro na conexão.";
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            });
+    });
+</script>
+
+</body>
+</html>
