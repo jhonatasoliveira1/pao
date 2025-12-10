@@ -129,7 +129,7 @@
     </div>
 
     <script>
-        // --- COLOQUE SUA NOVA URL AQUI ---
+        // --- COLOQUE SUA URL AQUI ---
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxzGg7Ipn-ynuqUymITdjQ1ch97d37Db8hkQqsyL_3Pp5JGZ3SzpZM93oCqPO0LnkKs/exec';
         
         let pacientes = [];
@@ -146,10 +146,9 @@
                 });
         };
 
-        // 2. Preencher Select de Escolas Automaticamente
+        // 2. Preencher Select de Escolas
         function preencherFiltroEscolas(data) {
             const select = document.getElementById('filter-school');
-            // Pega nomes únicos, remove vazios e ordena
             const escolas = [...new Set(data.map(p => p.unidade).filter(u => u))].sort();
             
             escolas.forEach(escola => {
@@ -160,7 +159,7 @@
             });
         }
 
-        // 3. Renderizar Lista (Com Filtros)
+        // 3. Renderizar Lista
         function renderizarLista(lista) {
             const container = document.getElementById('lista');
             const termo = document.getElementById('search').value.toLowerCase();
@@ -170,18 +169,15 @@
             container.innerHTML = "";
 
             lista.forEach(p => {
-                // Filtro Texto
                 if (!p.nome.toLowerCase().includes(termo)) return;
-                // Filtro Agendado
                 if (!showScheduled && p.status === 'Agendado') return;
-                // Filtro Escola
                 if (escolaFiltro && p.unidade !== escolaFiltro) return;
 
                 const card = document.createElement('div');
-                card.className = `card status-${(p.status || 'Novo').split(' ')[0]}`; // Pega primeira palavra para classe CSS
+                card.className = `card status-${(p.status || 'Novo').split(' ')[0]}`;
                 if(p.status && p.status.includes("Tentativa")) card.classList.add("status-Tentativa");
+                if(p.status && p.status.includes("Falha")) card.classList.add("status-Falha");
                 
-                // Ícone Visual
                 let icon = "⚪";
                 if(p.status && p.status.includes("Tentativa")) icon = "🟡";
                 if(p.status && p.status.includes("Falha")) icon = "🔴";
@@ -203,7 +199,6 @@
             }
         }
 
-        // Eventos de Filtro
         document.getElementById('search').addEventListener('input', () => renderizarLista(pacientes));
         document.getElementById('show-scheduled').addEventListener('change', () => renderizarLista(pacientes));
         document.getElementById('filter-school').addEventListener('change', () => renderizarLista(pacientes));
@@ -229,10 +224,15 @@
             document.getElementById('d-tel2').innerText = p.tel2;
         }
 
-        // 5. Funções de Ação
-        function salvarFeedback(status) {
-            if(!confirm(`Confirmar status: ${status}?`)) return;
-            enviarDados(status, null);
+        // 5. Salvar Feedback (COM DATA AUTOMÁTICA)
+        function salvarFeedback(statusBase) {
+            // Pega a data de hoje no formato brasileiro
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            const statusComData = `${statusBase} - ${hoje}`;
+
+            if(!confirm(`Confirmar registro: ${statusComData}?`)) return;
+            
+            enviarDados(statusComData, null);
         }
 
         function mostrarAgendamento() {
