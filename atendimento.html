@@ -34,7 +34,9 @@
     </div>
 
     <form id="formAtendimento">
-        <input type="hidden" name="action" value="atualizar"> <input type="hidden" name="id_agendamento" id="idAgendamento"> <input type="hidden" name="Motivo Falta" id="motivoFinal">
+        <input type="hidden" name="action" value="atualizar">
+        <input type="hidden" name="id_agendamento" id="idAgendamento">
+        <input type="hidden" name="Motivo Falta" id="motivoFinal">
 
         <h1>FICHA DE ATENDIMENTO</h1>
 
@@ -152,6 +154,7 @@
                     inputBusca.placeholder = "Digite Nome ou CPF...";
                     data.forEach(p => {
                         const opt = document.createElement('option');
+                        // Exibe: NOME | DATA: ...
                         opt.value = `${p.nome} | DATA: ${formatarData(p.data_agenda)}`;
                         datalist.appendChild(opt);
                     });
@@ -163,18 +166,34 @@
             });
     };
 
-    function formatarData(dataISO) {
-        if(!dataISO) return "-";
-        try {
-            let d = new Date(dataISO);
-            d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
-            return d.toLocaleDateString('pt-BR');
-        } catch(e) { return dataISO; }
+    // --- FUNÇÃO DE DATA BLINDADA (CORREÇÃO AQUI) ---
+    function formatarData(data) {
+        if (!data) return "-";
+        
+        // Se a data já tiver barra (ex: 25/12/2025), o script já mandou certo. Retorna ela mesma.
+        if (data.includes('/')) {
+            // Remove o 'T' e hora se vier junto por acidente (ex: 25/12/2025T00...)
+            return data.split('T')[0];
+        }
+
+        // Se vier com traço (ex: 2025-12-25), formata.
+        if (data.includes('-')) {
+            try {
+                let partes = data.split('T')[0].split('-');
+                if(partes.length === 3) {
+                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                }
+            } catch(e) { return data; }
+        }
+        
+        // Se não souber o que é, devolve o texto original sem dar erro
+        return data; 
     }
 
     // 2. PREENCHER DADOS AO SELECIONAR
     inputBusca.addEventListener('input', function() {
         const val = this.value;
+        // Compara usando a mesma função de formatação
         const p = filaEspera.find(x => `${x.nome} | DATA: ${formatarData(x.data_agenda)}` === val);
 
         if (p) {
@@ -182,11 +201,12 @@
             document.getElementById('nomePaciente').value = p.nome;
             document.getElementById('cpfPaciente').value = p.cpf;
             
-            // CAMPO: Data Agendada pela Marcação
+            // PREENCHE A DATA (usando a função blindada)
             document.getElementById('dataAgendadaRececao').value = formatarData(p.data_agenda);
             
             document.getElementById('maePaciente').value = p.mae || "Não informado";
-            document.getElementById('nascPaciente').value = p.nasc || "-";
+            // Aplica a mesma proteção para a data de nascimento
+            document.getElementById('nascPaciente').value = formatarData(p.nasc) || "-";
         }
     });
 
